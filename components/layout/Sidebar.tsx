@@ -119,7 +119,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
                 className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-all group"
               >
                 <ExternalLink size={18} className="text-gray-500 group-hover:text-white" />
-                <span>Painel de Vendas</span>
+                <span>Plataforma de Receitas</span>
               </a>
               <a
                 href="https://receitasmilionarias.com.br/"

@@ -19,7 +19,7 @@ import AdminCourseCreate from './pages/AdminCourseCreate';
 
 import Button from './components/ui/Button';
 import Input from './components/ui/Input';
-import { ExternalLink, Globe, LayoutDashboard, LogIn, Eye, EyeOff } from 'lucide-react';
+import { ExternalLink, Globe, Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
 
 // Initial Mock Data
 const INITIAL_COURSES: Course[] = [
@@ -211,119 +211,155 @@ function App() {
     }
   };
 
-  // 1. Login Screen (Split Layout with Pizza Background)
+  // 1. Login Screen (New Premium Design)
   if (!user) {
     return (
-      <div className="min-h-screen w-full flex bg-white">
-        {/* Left Side - Image & Branding (Hidden on Mobile) */}
-        <div className="hidden lg:flex w-5/12 relative flex-col justify-center items-center text-center p-12 overflow-hidden">
-           {/* Background Image: Pizza */}
+      <div className="min-h-screen w-full flex bg-rm-green font-sans">
+        {/* Left Side - Image & Branding (Desktop) */}
+        <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 overflow-hidden border-r-4 border-rm-gold">
+           {/* Background Image */}
            <div 
-             className="absolute inset-0 bg-cover bg-center z-0"
+             className="absolute inset-0 bg-cover bg-center z-0 scale-105"
              style={{ 
-               backgroundImage: 'url("https://images.unsplash.com/photo-1590947132387-155cc02f3212?q=80&w=2070&auto=format&fit=crop")',
+               backgroundImage: 'url("https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2070&auto=format&fit=crop")',
              }}
-           />
-           {/* Dark Overlay */}
-           <div className="absolute inset-0 bg-black/50 z-10" />
+           >
+             <div className="absolute inset-0 bg-gradient-to-t from-rm-green via-rm-green/80 to-rm-green/40 mix-blend-multiply" />
+           </div>
            
            {/* Content */}
-           <div className="relative z-20 max-w-lg">
-             <div className="bg-black/60 backdrop-blur-sm p-8 rounded-xl shadow-2xl">
-               <h2 className="text-3xl font-serif font-bold text-white mb-4 leading-tight">
-                 Junte-se à Elite da Culinária
-               </h2>
-               <p className="text-white text-lg leading-relaxed font-light">
-                 A plataforma Receitas Milionárias é o seu passaporte para o sucesso. 
-                 Cadastre-se e comece a transformar suas receitas em lucro.
-               </p>
-             </div>
+           <div className="relative z-20">
+             <img 
+               src="https://receitasmilionarias.com.br/static/images/logo-deitado-claro.png" 
+               alt="Receitas Milionárias" 
+               className="h-12 w-auto object-contain mb-8"
+             />
+           </div>
+
+           <div className="relative z-20 text-white max-w-lg space-y-6">
+             <h2 className="text-5xl font-serif font-bold leading-tight">
+               Transforme suas <span className="text-rm-gold">Receitas</span> em um Império.
+             </h2>
+             <p className="text-lg opacity-90 font-light border-l-4 border-rm-gold pl-4">
+               Acesse a área exclusiva de membros, aprenda com os melhores e escale seus resultados no mercado digital.
+             </p>
+           </div>
+
+           <div className="relative z-20 text-xs text-white/50">
+             © 2024 Receitas Milionárias Academy. Todos os direitos reservados.
            </div>
         </div>
 
         {/* Right Side - Login Form */}
-        <div className="w-full lg:w-7/12 flex flex-col justify-center items-center p-6 bg-white relative">
-          
-          <div className="w-full max-w-sm space-y-8 animate-fade-in-up">
-            {/* Logo in Circle */}
-            <div className="flex flex-col items-center">
-               <div className="h-24 w-24 rounded-full bg-white shadow-xl flex items-center justify-center border-2 border-green-50 mb-4 p-2 relative z-10 -mt-12 lg:mt-0">
-                  <img 
+        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 relative">
+          {/* Mobile Background (Absolute) */}
+          <div 
+            className="lg:hidden absolute inset-0 bg-cover bg-center z-0"
+             style={{ 
+               backgroundImage: 'url("https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2070&auto=format&fit=crop")',
+             }}
+          >
+            <div className="absolute inset-0 bg-rm-green/90" />
+          </div>
+
+          <div className="w-full max-w-md z-10">
+            {/* Card Container */}
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 lg:p-12 border-t-8 border-rm-gold animate-fade-in-up">
+              
+              <div className="text-center mb-8">
+                <div className="lg:hidden flex justify-center mb-6">
+                   <img 
                     src="https://receitasmilionarias.com.br/static/images/logo-deitado-escuro.png" 
                     alt="Receitas Milionárias" 
-                    className="w-full h-auto object-contain"
+                    className="h-10 w-auto object-contain"
                   />
-               </div>
-               <h2 className="text-2xl font-serif font-bold text-gray-700">Acessar Sistema</h2>
-            </div>
+                </div>
+                <h3 className="text-2xl font-serif font-bold text-rm-green">Bem-vindo de volta!</h3>
+                <p className="text-gray-500 text-sm mt-2">Insira suas credenciais para acessar sua área de aluno.</p>
+              </div>
 
-            {/* Login Form */}
-            <form onSubmit={handleLogin} className="space-y-6">
-               <Input 
-                 label="Email"
-                 type="email"
-                 placeholder="seu@email.com"
-                 value={email}
-                 onChange={(e) => setEmail(e.target.value)}
-               />
+              <form onSubmit={handleLogin} className="space-y-5">
+                 <div className="space-y-1">
+                   <label className="text-sm font-bold text-rm-green ml-1">E-mail</label>
+                   <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <input 
+                        type="email" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-1 focus:ring-rm-gold outline-none transition-all text-sm"
+                        placeholder="seu@email.com"
+                      />
+                   </div>
+                 </div>
 
-               <Input 
-                 label="Senha"
-                 type={showPassword ? "text" : "password"}
-                 value={password}
-                 onChange={(e) => setPassword(e.target.value)}
-                 endIcon={showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
-                 onEndIconClick={() => setShowPassword(!showPassword)}
-               />
+                 <div className="space-y-1">
+                   <label className="text-sm font-bold text-rm-green ml-1">Senha</label>
+                   <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <input 
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-1 focus:ring-rm-gold outline-none transition-all text-sm"
+                        placeholder="••••••••"
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rm-green"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                   </div>
+                 </div>
 
-               <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <div className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 ${rememberMe ? 'bg-rm-green' : 'bg-gray-300'}`}>
-                      <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${rememberMe ? 'translate-x-4' : ''}`}></div>
-                    </div>
-                    <input 
-                      type="checkbox" 
-                      className="hidden" 
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                    />
-                    <span className="text-sm text-gray-600">Lembrar-me</span>
-                  </label>
-               </div>
+                 <div className="flex items-center justify-between text-xs lg:text-sm">
+                    <label className="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-rm-green">
+                      <input 
+                        type="checkbox" 
+                        className="rounded text-rm-green focus:ring-rm-gold border-gray-300" 
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                      />
+                      <span>Lembrar-me</span>
+                    </label>
+                    <a href="#" className="text-rm-gold hover:underline font-semibold">Esqueceu a senha?</a>
+                 </div>
 
-               <Button 
-                  type="submit"
-                  variant="secondary"
-                  className="w-full text-lg py-3 font-bold shadow-lg hover:shadow-xl transition-all"
-               >
-                  Entrar
-               </Button>
-            </form>
+                 <Button 
+                    type="submit"
+                    variant="secondary" // Green Button
+                    className="w-full py-4 text-base font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all group mt-4"
+                 >
+                    Acessar Academy <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                 </Button>
+              </form>
 
-            {/* Footer Links */}
-            <div className="text-center pt-2">
-               <p className="text-sm text-gray-500">
-                 Não tem conta? <a href="#" className="text-rm-green font-bold hover:underline">Cadastre-se</a>
-               </p>
-            </div>
-            
-            <div className="flex justify-center gap-6 pt-4 border-t border-gray-100">
-               <a 
-                 href="https://receitasmilionarias.com.br/" 
-                 target="_blank" 
-                 rel="noopener noreferrer"
-                 className="flex items-center gap-2 text-xs text-gray-400 hover:text-rm-gold transition-colors"
-               >
-                 <Globe size={14} /> Site Oficial
-               </a>
-               <a 
-                 href="https://dashboard.receitasmilionarias.com.br/" 
-                 target="_blank" 
-                 rel="noopener noreferrer"
-                 className="flex items-center gap-2 text-xs text-gray-400 hover:text-rm-gold transition-colors"
-               >
-                 <ExternalLink size={14} /> Painel de Vendas
-               </a>
+              <div className="mt-8 pt-6 border-t border-gray-100 text-center space-y-4">
+                 <p className="text-sm text-gray-500">
+                   Ainda não é aluno? <a href="#" className="text-rm-green font-bold hover:text-rm-gold transition-colors">Matricule-se agora</a>
+                 </p>
+                 
+                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-xs">
+                   <a 
+                     href="https://receitasmilionarias.com.br/" 
+                     target="_blank" 
+                     rel="noopener noreferrer"
+                     className="flex items-center gap-1.5 text-gray-400 hover:text-rm-green transition-colors"
+                   >
+                     <ExternalLink size={12} /> Plataforma de Receitas
+                   </a>
+                   <span className="hidden sm:inline text-gray-300">|</span>
+                   <a 
+                     href="#" 
+                     className="flex items-center gap-1.5 text-gray-400 hover:text-rm-green transition-colors"
+                   >
+                     <Globe size={12} /> Site Oficial
+                   </a>
+                 </div>
+              </div>
+
             </div>
           </div>
         </div>

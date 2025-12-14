@@ -271,6 +271,7 @@ function App() {
        return (
          <AdminCourseCreate 
            initialData={editingCourse}
+           currentUser={user} // Pass current user here
            onSave={handleSaveCourse}
            onCancel={() => {
              setIsCreating(false);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Save, Upload, Plus, X, Layout, List, Trash2, Video, 
   Clock, GripVertical, ChevronDown, ChevronRight, ArrowLeft, 
@@ -6,17 +6,19 @@ import {
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import { Course, Module, Lesson, Attachment } from '../types';
+import { Course, Module, Lesson, Attachment, User } from '../types';
 import { ToastMessage } from '../components/ui/Toast';
+import { api } from '../services/api';
 
 interface AdminCourseCreateProps {
   initialData?: Course | null;
+  currentUser: User | null; // Receive current user for ID
   onSave: (course: Course) => void;
   onCancel: () => void;
   onShowToast: (type: ToastMessage['type'], title: string, message?: string) => void;
 }
 
-const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSave, onCancel, onShowToast }) => {
+const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, currentUser, onSave, onCancel, onShowToast }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'curriculum'>('info');
 
   // Form State
@@ -31,9 +33,18 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
     { id: Date.now().toString(), title: 'Módulo 01: Introdução', lessons: [] }
   ]);
   
-  // UI State for Accordions
+  // UI State for Accordions & Uploads
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [uploadingState, setUploadingState] = useState<{ id: string, type: string } | null>(null);
+
+  // Hidden File Inputs Refs
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const lessonVideoInputRef = useRef<HTMLInputElement>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
+
+  // Temp refs to know which lesson triggered the upload
+  const activeUploadContext = useRef<{ moduleId: string, lessonId: string } | null>(null);
 
   // Initialize expanded state for first module
   useEffect(() => {
@@ -41,6 +52,74 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
       setExpandedModules({ [modules[0].id]: true });
     }
   }, []);
+
+  // --- File Upload Logic ---
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video' | 'document') => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    const userId = currentUser?.id || '0';
+
+    // Set loading state based on type
+    if (type === 'image') setUploadingState({ id: 'thumbnail', type: 'image' });
+    else if (activeUploadContext.current) {
+        setUploadingState({ id: activeUploadContext.current.lessonId, type });
+    }
+
+    try {
+        const url = await api.uploadMedia(file, userId, type);
+        
+        if (type === 'image') {
+            setThumbnailUrl(url);
+            onShowToast('success', 'Imagem enviada', 'Capa do curso atualizada.');
+        } else if (type === 'video' && activeUploadContext.current) {
+            const { moduleId, lessonId } = activeUploadContext.current;
+            updateLesson(moduleId, lessonId, { videoUrl: url, videoType: 'upload' });
+            onShowToast('success', 'Vídeo enviado', 'Aula atualizada com sucesso.');
+        } else if (type === 'document' && activeUploadContext.current) {
+            const { moduleId, lessonId } = activeUploadContext.current;
+            
+            // Format size
+            const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+            
+            const newAttachment: Attachment = {
+                id: Date.now().toString(),
+                name: file.name,
+                url: url,
+                size: `${sizeInMB} MB`,
+                type: 'pdf' // Generic type for icon
+            };
+            
+            // Add attachment to lesson
+            const module = modules.find(m => m.id === moduleId);
+            const lesson = module?.lessons.find(l => l.id === lessonId);
+            if (lesson) {
+                const currentAttachments = lesson.attachments || [];
+                updateLesson(moduleId, lessonId, { attachments: [...currentAttachments, newAttachment] });
+            }
+            onShowToast('success', 'Arquivo anexado', 'Material complementar adicionado.');
+        }
+
+    } catch (error) {
+        onShowToast('error', 'Falha no upload', 'Não foi possível enviar o arquivo. Tente novamente.');
+    } finally {
+        setUploadingState(null);
+        // Clear input so same file can be selected again
+        e.target.value = '';
+    }
+  };
+
+  const triggerThumbnailUpload = () => thumbnailInputRef.current?.click();
+  
+  const triggerLessonVideoUpload = (moduleId: string, lessonId: string) => {
+      activeUploadContext.current = { moduleId, lessonId };
+      lessonVideoInputRef.current?.click();
+  };
+
+  const triggerAttachmentUpload = (moduleId: string, lessonId: string) => {
+      activeUploadContext.current = { moduleId, lessonId };
+      attachmentInputRef.current?.click();
+  };
+
 
   // --- Calculations & Save ---
   const calculateTotalDuration = () => {
@@ -152,25 +231,6 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
   };
 
   // --- Attachments Logic ---
-  const addAttachment = (moduleId: string, lessonId: string) => {
-    const newFile: Attachment = {
-      id: Date.now().toString(),
-      name: `Material_Complementar_${Math.floor(Math.random() * 100)}.pdf`,
-      size: '2.4 MB',
-      type: 'pdf',
-      url: '#'
-    };
-    
-    // Find current attachments
-    const module = modules.find(m => m.id === moduleId);
-    const lesson = module?.lessons.find(l => l.id === lessonId);
-    if (!lesson) return;
-
-    const currentAttachments = lesson.attachments || [];
-    updateLesson(moduleId, lessonId, { attachments: [...currentAttachments, newFile] });
-    onShowToast('success', 'Arquivo Anexado', 'O material complementar foi adicionado à aula.');
-  };
-
   const removeAttachment = (moduleId: string, lessonId: string, attachmentId: string) => {
     const module = modules.find(m => m.id === moduleId);
     const lesson = module?.lessons.find(l => l.id === lessonId);
@@ -185,6 +245,29 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans">
       
+      {/* Hidden Inputs for File Uploads */}
+      <input 
+          type="file" 
+          ref={thumbnailInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={(e) => handleFileUpload(e, 'image')} 
+      />
+      <input 
+          type="file" 
+          ref={lessonVideoInputRef} 
+          className="hidden" 
+          accept="video/*" 
+          onChange={(e) => handleFileUpload(e, 'video')} 
+      />
+      <input 
+          type="file" 
+          ref={attachmentInputRef} 
+          className="hidden" 
+          accept=".pdf,.doc,.docx,.zip,.rar,.png,.jpg" 
+          onChange={(e) => handleFileUpload(e, 'document')} 
+      />
+
       {/* Top Action Bar */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-16 z-30 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -317,8 +400,16 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
                     Capa do Curso
                   </h3>
                   
-                  <div className="aspect-video bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center mb-4 relative overflow-hidden group hover:border-rm-gold transition-colors cursor-pointer">
-                     {thumbnailUrl ? (
+                  <div 
+                    onClick={triggerThumbnailUpload}
+                    className="aspect-video bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center mb-4 relative overflow-hidden group hover:border-rm-gold transition-colors cursor-pointer"
+                  >
+                     {uploadingState?.id === 'thumbnail' ? (
+                        <div className="flex flex-col items-center">
+                            <span className="animate-spin h-8 w-8 border-4 border-rm-gold border-t-transparent rounded-full mb-2"></span>
+                            <span className="text-xs font-bold text-gray-500">Enviando...</span>
+                        </div>
+                     ) : thumbnailUrl ? (
                         <>
                           <img src={thumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
@@ -539,12 +630,29 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
                                           />
                                         </div>
                                      ) : (
-                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white hover:border-rm-gold transition-colors cursor-pointer">
-                                           <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                              <Upload size={20} />
-                                           </div>
-                                           <p className="text-sm font-medium text-gray-700">Clique para selecionar arquivo</p>
-                                           <p className="text-[10px] text-gray-400">MP4, MOV (Max 2GB)</p>
+                                        <div 
+                                          onClick={() => triggerLessonVideoUpload(module.id, lesson.id)}
+                                          className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white hover:border-rm-gold transition-colors cursor-pointer"
+                                        >
+                                           {uploadingState?.id === lesson.id && uploadingState?.type === 'video' ? (
+                                              <div className="flex flex-col items-center">
+                                                  <span className="animate-spin h-8 w-8 border-4 border-rm-gold border-t-transparent rounded-full mb-2"></span>
+                                                  <span className="text-xs font-bold text-gray-500">Enviando Vídeo (Isso pode demorar)...</span>
+                                              </div>
+                                           ) : lesson.videoUrl ? (
+                                              <div className="flex items-center justify-center gap-2 text-green-600 font-bold">
+                                                  <Video size={20} /> Vídeo carregado!
+                                                  <span className="text-xs font-normal text-gray-500 block">(Clique para substituir)</span>
+                                              </div>
+                                           ) : (
+                                              <>
+                                                <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <Upload size={20} />
+                                                </div>
+                                                <p className="text-sm font-medium text-gray-700">Clique para selecionar arquivo</p>
+                                                <p className="text-[10px] text-gray-400">MP4, MOV (Max 2GB)</p>
+                                              </>
+                                           )}
                                         </div>
                                      )}
                                   </div>
@@ -554,10 +662,13 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
                                      <div className="flex items-center justify-between mb-3">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Materiais Complementares</label>
                                         <button 
-                                          onClick={() => addAttachment(module.id, lesson.id)}
+                                          onClick={() => triggerAttachmentUpload(module.id, lesson.id)}
                                           className="text-xs font-bold text-rm-gold hover:text-rm-green flex items-center gap-1"
                                         >
-                                          <Plus size={12} /> Adicionar Arquivo
+                                          {uploadingState?.id === lesson.id && uploadingState?.type === 'document' ? (
+                                              <span className="animate-spin h-3 w-3 border-2 border-rm-gold border-t-transparent rounded-full mr-1"></span>
+                                          ) : <Plus size={12} />} 
+                                          Adicionar Arquivo
                                         </button>
                                      </div>
                                      <div className="space-y-2">

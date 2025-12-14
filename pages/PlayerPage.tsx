@@ -103,7 +103,7 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
                         onClick={() => setIsPlaying(true)}
                         className="relative z-20 bg-rm-gold hover:bg-rm-goldHover text-white rounded-full p-4 md:p-6 shadow-2xl hover:scale-110 transition-transform group-hover:shadow-rm-gold/50"
                       >
-                        <Play size={32} md:size={48} fill="currentColor" className="ml-1" />
+                        <Play fill="currentColor" className="ml-1 w-8 h-8 md:w-12 md:h-12" />
                       </button>
                    </div>
                 )}

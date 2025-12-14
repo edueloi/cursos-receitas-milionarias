@@ -201,29 +201,32 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
         </div>
         
         {/* Actions & Status Toggle */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col md:flex-row-reverse items-center gap-3 w-full md:w-auto">
+          
+          {/* Save Button (Primary) */}
+          <Button onClick={handleSave} isLoading={isSaving} className="px-6 shadow-lg shadow-rm-gold/20 w-full md:w-auto justify-center">
+            <Save size={18} className="mr-2" /> {isSaving ? 'Enviando...' : 'Salvar Curso'}
+          </Button>
+
+          {/* Cancel Button */}
+          <Button variant="ghost" onClick={onCancel} disabled={isSaving} className="w-full md:w-auto justify-center">Cancelar</Button>
+
           {/* Status Switcher */}
-          <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+          <div className="flex items-center bg-gray-100 p-1 rounded-lg w-full md:w-auto">
              <button 
                onClick={() => setStatus('draft')}
-               className={`px-4 py-2 rounded-md text-xs font-bold transition-all ${status === 'draft' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+               className={`flex-1 md:flex-none px-4 py-2 rounded-md text-xs font-bold transition-all text-center ${status === 'draft' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
              >
                Rascunho
              </button>
              <button 
                onClick={() => setStatus('published')}
-               className={`px-4 py-2 rounded-md text-xs font-bold transition-all ${status === 'published' ? 'bg-green-500 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+               className={`flex-1 md:flex-none px-4 py-2 rounded-md text-xs font-bold transition-all text-center ${status === 'published' ? 'bg-green-500 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
              >
                Publicado
              </button>
           </div>
 
-          <div className="h-8 w-px bg-gray-200 mx-1"></div>
-
-          <Button variant="ghost" onClick={onCancel} disabled={isSaving}>Cancelar</Button>
-          <Button onClick={handleSave} isLoading={isSaving} className="px-6 shadow-lg shadow-rm-gold/20">
-            <Save size={18} className="mr-2" /> {isSaving ? 'Enviando...' : 'Salvar Curso'}
-          </Button>
         </div>
       </div>
 

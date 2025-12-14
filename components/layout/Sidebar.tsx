@@ -48,8 +48,9 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
 
       {/* Sidebar Drawer */}
       <aside className={`
-        fixed top-0 left-0 z-[60] h-screen w-80 bg-[#1C3B32] text-white shadow-[10px_0_30px_rgba(0,0,0,0.3)] transform transition-transform duration-300 ease-out border-r border-white/5
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        fixed top-0 left-0 z-[60] h-screen w-80 bg-[#1C3B32] text-white 
+        transform transition-transform duration-300 ease-out border-r border-white/5
+        ${isOpen ? 'translate-x-0 shadow-[10px_0_30px_rgba(0,0,0,0.3)]' : '-translate-x-full shadow-none'}
       `}>
         
         {/* Decorative background accent */}

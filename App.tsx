@@ -232,9 +232,10 @@ function App() {
   // 1. Login Screen (New Premium Design)
   if (!user) {
     return (
-      <div className="min-h-screen w-full flex bg-rm-green font-sans">
+      <div className="min-h-screen w-full flex bg-rm-green font-sans overflow-hidden">
         <ToastContainer toasts={toasts} removeToast={removeToast} />
-        {/* Left Side - Image & Branding (Desktop) */}
+        
+        {/* Left Side - Image & Branding (Desktop Only) */}
         <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 overflow-hidden border-r-4 border-rm-gold">
            {/* Background Image */}
            <div 
@@ -248,7 +249,6 @@ function App() {
            
            {/* Content */}
            <div className="relative z-20">
-             {/* Composed Logo White/Gold */}
              <div className="flex items-center gap-3 select-none mb-8">
                <img 
                  src="https://receitasmilionarias.com.br/static/images/logo.png" 
@@ -287,39 +287,27 @@ function App() {
            </div>
         </div>
 
-        {/* Right Side - Login Form */}
-        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 relative bg-gray-50/50">
-          {/* Mobile Background (Absolute) */}
-          <div 
-            className="lg:hidden absolute inset-0 bg-cover bg-center z-0"
-             style={{ 
-               backgroundImage: 'url("https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2070&auto=format&fit=crop")',
-             }}
-          >
-            <div className="absolute inset-0 bg-rm-green/90" />
-          </div>
+        {/* Right Side - Login Form (Desktop & Mobile) */}
+        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 lg:p-12 relative bg-gradient-to-b from-[#1C3B32] to-[#0f241e] lg:bg-none lg:bg-gray-50/50">
+          
+          <div className="w-full max-w-md z-10 flex flex-col items-center">
+            {/* Mobile Only Header Logo */}
+            <div className="lg:hidden mb-8 flex flex-col items-center">
+                 <img 
+                   src="https://receitasmilionarias.com.br/static/images/logo.png" 
+                   alt="Logo" 
+                   className="h-16 w-16 object-contain mb-3 drop-shadow-md"
+                 />
+                 <h1 className="font-serif font-bold text-2xl text-white">Receitas <span className="text-rm-gold">Milionárias</span></h1>
+                 <p className="text-white/60 text-sm mt-1">Academy</p>
+            </div>
 
-          <div className="w-full max-w-md z-10">
             {/* Card Container */}
-            <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 lg:p-12 border-t-8 border-rm-gold animate-fade-in-up">
+            <div className="w-full bg-white rounded-2xl shadow-2xl p-8 lg:p-12 border-t-8 border-rm-gold animate-fade-in-up">
               
               <div className="text-center mb-8">
-                <div className="lg:hidden flex justify-center mb-6">
-                   {/* Mobile Logo */}
-                   <div className="flex items-center gap-2 select-none">
-                     <img 
-                       src="https://receitasmilionarias.com.br/static/images/logo.png" 
-                       alt="Logo" 
-                       className="h-10 w-10 object-contain"
-                     />
-                     <div className="flex flex-col text-left">
-                       <span className="font-serif font-bold text-rm-green text-xl leading-none">Receitas</span>
-                       <span className="font-serif font-bold text-rm-gold text-xl leading-none">Milionárias</span>
-                     </div>
-                   </div>
-                </div>
-                <h3 className="text-2xl font-serif font-bold text-rm-green">Bem-vindo à Academy</h3>
-                <p className="text-gray-500 text-sm mt-2">Área de membros para afiliados e alunos.</p>
+                <h3 className="text-2xl font-serif font-bold text-rm-green">Acessar Plataforma</h3>
+                <p className="text-gray-500 text-sm mt-2">Digite suas credenciais para continuar.</p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-5">
@@ -394,13 +382,6 @@ function App() {
                    >
                      <ExternalLink size={12} /> Painel de Vendas
                    </a>
-                   <span className="hidden sm:inline text-gray-300">|</span>
-                   <a 
-                     href="#" 
-                     className="flex items-center gap-1.5 text-gray-400 hover:text-rm-green transition-colors"
-                   >
-                     <Globe size={12} /> Termos de Uso
-                   </a>
                  </div>
               </div>
 
@@ -411,22 +392,9 @@ function App() {
     );
   }
 
-  // 2. Player Mode (Fullscreen)
-  if (selectedCourse) {
-    return (
-      <div className="h-full">
-        <ToastContainer toasts={toasts} removeToast={removeToast} />
-        <PlayerPage 
-          course={selectedCourse} 
-          onBack={() => setSelectedCourse(null)} 
-        />
-      </div>
-    );
-  }
-
   // 3. Main Layout
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
+    <div className="min-h-screen bg-[#F8F9FA] flex flex-col w-full overflow-x-hidden">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <Header 
         user={user} 
@@ -445,7 +413,7 @@ function App() {
       />
 
       {/* Main Content - Full Width */}
-      <main className="flex-1 transition-all duration-300 mt-16">
+      <main className="flex-1 transition-all duration-300 mt-16 w-full max-w-full">
         {renderContent()}
       </main>
     </div>

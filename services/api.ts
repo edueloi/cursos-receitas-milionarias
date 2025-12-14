@@ -5,7 +5,8 @@ const API_URL = 'https://api.receitasmilionarias.com.br';
 export const api = {
   login: async (email: string, senha: string) => {
     try {
-      const response = await fetch(`${API_URL}/login`, {
+      // Corrected endpoint based on user feedback
+      const response = await fetch(`${API_URL}/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

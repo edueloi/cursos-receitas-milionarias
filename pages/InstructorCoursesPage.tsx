@@ -1,15 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Course } from '../types';
-import { Edit, Eye, MoreHorizontal, Plus } from 'lucide-react';
+import { Edit, Eye, Plus, Loader } from 'lucide-react';
 import Button from '../components/ui/Button';
+import { api } from '../services/api';
 
 interface InstructorCoursesPageProps {
-  courses: Course[];
+  courses: Course[]; // Prop fallback, but we will fetch locally
   onEditCourse: (course: Course) => void;
   onCreateCourse: () => void;
 }
 
-const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ courses, onEditCourse, onCreateCourse }) => {
+const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ onEditCourse, onCreateCourse }) => {
+  const [localCourses, setLocalCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch courses from the real backend
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const data = await api.getCourses();
+        setLocalCourses(data);
+      } catch (error) {
+        console.error("Failed to fetch courses", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
   
   const renderStatusBadge = (status: string) => (
      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
@@ -19,6 +37,14 @@ const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ courses, 
         {status === 'published' ? 'Publicado' : 'Rascunho'}
      </span>
   );
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader className="animate-spin text-rm-green" size={40} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-10 animate-fade-in pb-24 lg:pb-10">
@@ -35,11 +61,11 @@ const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ courses, 
 
       {/* Mobile View: Cards */}
       <div className="md:hidden space-y-4">
-         {courses.map(course => (
+         {localCourses.map(course => (
             <div key={course.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-4">
                <div className="flex items-start gap-4">
                   <img 
-                    src={course.thumbnailUrl} 
+                    src={course.thumbnailUrl || 'https://via.placeholder.com/150'} 
                     className="w-20 h-20 rounded-lg object-cover flex-shrink-0 shadow-sm" 
                     alt={course.title} 
                   />
@@ -65,7 +91,7 @@ const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ courses, 
                </div>
             </div>
          ))}
-         {courses.length === 0 && (
+         {localCourses.length === 0 && (
              <div className="p-8 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
                 Você ainda não criou nenhum curso.
              </div>
@@ -84,11 +110,11 @@ const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ courses, 
                </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-               {courses.map(course => (
+               {localCourses.map(course => (
                   <tr key={course.id} className="hover:bg-gray-50 transition-colors">
                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                           <img src={course.thumbnailUrl} className="w-10 h-10 rounded object-cover shadow-sm" alt="" />
+                           <img src={course.thumbnailUrl || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded object-cover shadow-sm" alt="" />
                            <span className="font-semibold text-gray-800">{course.title}</span>
                         </div>
                      </td>
@@ -110,7 +136,7 @@ const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ courses, 
                ))}
             </tbody>
          </table>
-         {courses.length === 0 && (
+         {localCourses.length === 0 && (
              <div className="p-10 text-center text-gray-500">
                 Você ainda não criou nenhum curso.
              </div>

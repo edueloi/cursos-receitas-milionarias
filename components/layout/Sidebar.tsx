@@ -57,11 +57,19 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
 
         {/* Sidebar Header */}
         <div className="h-24 flex items-center justify-between px-8 border-b border-white/10 relative z-10">
-           <img 
-             src="https://receitasmilionarias.com.br/static/images/logo-deitado-claro.png" 
-             alt="Receitas Milionárias" 
-             className="h-9 w-auto object-contain drop-shadow-lg"
-           />
+           {/* Composed Logo */}
+           <div className="flex items-center gap-3 select-none">
+             <img 
+               src="https://receitasmilionarias.com.br/static/images/logo.png" 
+               alt="Logo" 
+               className="h-10 w-10 object-contain drop-shadow-lg"
+             />
+             <div className="flex flex-col">
+               <span className="font-serif font-bold text-white text-xl leading-none tracking-wide">Receitas</span>
+               <span className="font-serif font-bold text-rm-gold text-xl leading-none tracking-wide">Milionárias</span>
+             </div>
+           </div>
+
            <button 
              onClick={onClose} 
              className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/20 hover:rotate-90 transition-all duration-300"

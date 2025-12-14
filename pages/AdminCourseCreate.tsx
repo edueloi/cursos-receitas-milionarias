@@ -8,14 +8,16 @@ import {
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { Course, Module, Lesson, Attachment } from '../types';
+import { ToastMessage } from '../components/ui/Toast';
 
 interface AdminCourseCreateProps {
   initialData?: Course | null;
   onSave: (course: Course) => void;
   onCancel: () => void;
+  onShowToast: (type: ToastMessage['type'], title: string, message?: string) => void;
 }
 
-const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSave, onCancel }) => {
+const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSave, onCancel, onShowToast }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'curriculum'>('info');
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -44,11 +46,15 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
 
   // --- AI Generation ---
   const handleGenerateAI = async () => {
-    if (!title) return;
+    if (!title) {
+        onShowToast('warning', 'Título Necessário', 'Digite um título para que a IA possa gerar o conteúdo.');
+        return;
+    }
     setIsGenerating(true);
     const result = await generateCourseOutline(title);
     setDescription(result);
     setIsGenerating(false);
+    onShowToast('success', 'Conteúdo Gerado!', 'A IA criou uma descrição baseada no seu título.');
   };
 
   // --- Calculations & Save ---
@@ -69,7 +75,10 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
   };
 
   const handleSave = () => {
-    if (!title) return alert("O título é obrigatório");
+    if (!title) {
+        onShowToast('error', 'Erro ao Salvar', 'O campo Título do Curso é obrigatório.');
+        return;
+    }
     
     const newCourse: Course = {
       id: initialData?.id || Date.now().toString(),
@@ -98,11 +107,13 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
       lessons: [] 
     }]);
     setExpandedModules(prev => ({ ...prev, [newId]: true }));
+    onShowToast('info', 'Módulo Adicionado', 'Configure o nome e as aulas abaixo.');
   };
 
   const removeModule = (moduleId: string) => {
     if (confirm('Tem certeza? Isso apagará todas as aulas deste módulo.')) {
       setModules(modules.filter(m => m.id !== moduleId));
+      onShowToast('warning', 'Módulo Removido');
     }
   };
 
@@ -172,6 +183,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
 
     const currentAttachments = lesson.attachments || [];
     updateLesson(moduleId, lessonId, { attachments: [...currentAttachments, newFile] });
+    onShowToast('success', 'Arquivo Anexado', 'O material complementar foi adicionado à aula.');
   };
 
   const removeAttachment = (moduleId: string, lessonId: string, attachmentId: string) => {

@@ -17,8 +17,9 @@ import InstructorDashboardPage from './pages/InstructorDashboardPage';
 import InstructorCoursesPage from './pages/InstructorCoursesPage';
 import AdminCourseCreate from './pages/AdminCourseCreate';
 
+// Components
 import Button from './components/ui/Button';
-import Input from './components/ui/Input';
+import ToastContainer, { ToastMessage } from './components/ui/Toast';
 import { ExternalLink, Globe, Eye, EyeOff, Lock, Mail, ArrowRight, CheckCircle } from 'lucide-react';
 
 // Initial Mock Data
@@ -87,6 +88,7 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
   
   // Login Form State
   const [email, setEmail] = useState('');
@@ -99,6 +101,16 @@ function App() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null); // For playing
   const [editingCourse, setEditingCourse] = useState<Course | null>(null); // For editing
   const [isCreating, setIsCreating] = useState(false); // For creating new
+
+  // Toast Handler
+  const addToast = (type: ToastMessage['type'], title: string, message?: string) => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, type, title, message }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
 
   // Simulate persistent login or check
   const handleLogin = (e?: React.FormEvent) => {
@@ -114,7 +126,9 @@ function App() {
       email: email || 'jefferson@receitasmilionarias.com.br',
       role: role
     });
-    // Default redirect based on role could go here, defaulting to dashboard for all
+
+    addToast('success', 'Login realizado com sucesso!', `Bem-vindo de volta, ${role === UserRole.ADMIN ? 'Chef' : 'Jefferson'}.`);
+
     setActiveTab('dashboard');
   };
 
@@ -125,6 +139,7 @@ function App() {
     setIsCreating(false);
     setEmail('');
     setPassword('');
+    addToast('info', 'Você saiu do sistema.', 'Até logo!');
   };
 
   // Navigation Logic
@@ -147,9 +162,11 @@ function App() {
     if (editingCourse) {
       setCourses(courses.map(c => c.id === course.id ? course : c));
       setEditingCourse(null);
+      addToast('success', 'Curso Atualizado!', 'As alterações foram salvas com sucesso.');
     } else {
       setCourses([...courses, { ...course, status: 'draft' }]); // Default new to draft
       setIsCreating(false);
+      addToast('success', 'Curso Criado!', 'Seu novo curso foi salvo como rascunho.');
     }
     // Return to appropriate list based on role
     setActiveTab(user?.role === UserRole.ADMIN ? 'instructor-courses' : 'courses');
@@ -180,6 +197,7 @@ function App() {
              setEditingCourse(null);
              setActiveTab('instructor-courses');
            }}
+           onShowToast={addToast}
          />
        );
     }
@@ -215,6 +233,7 @@ function App() {
   if (!user) {
     return (
       <div className="min-h-screen w-full flex bg-rm-green font-sans">
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
         {/* Left Side - Image & Branding (Desktop) */}
         <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 overflow-hidden border-r-4 border-rm-gold">
            {/* Background Image */}
@@ -229,11 +248,18 @@ function App() {
            
            {/* Content */}
            <div className="relative z-20">
-             <img 
-               src="https://receitasmilionarias.com.br/static/images/logo-deitado-claro.png" 
-               alt="Receitas Milionárias" 
-               className="h-12 w-auto object-contain mb-8"
-             />
+             {/* Composed Logo White/Gold */}
+             <div className="flex items-center gap-3 select-none mb-8">
+               <img 
+                 src="https://receitasmilionarias.com.br/static/images/logo.png" 
+                 alt="Logo" 
+                 className="h-14 w-14 object-contain"
+               />
+               <div className="flex flex-col">
+                 <span className="font-serif font-bold text-white text-3xl leading-none tracking-wide">Receitas</span>
+                 <span className="font-serif font-bold text-rm-gold text-3xl leading-none tracking-wide">Milionárias</span>
+               </div>
+             </div>
            </div>
 
            <div className="relative z-20 text-white max-w-lg space-y-6">
@@ -279,11 +305,18 @@ function App() {
               
               <div className="text-center mb-8">
                 <div className="lg:hidden flex justify-center mb-6">
-                   <img 
-                    src="https://receitasmilionarias.com.br/static/images/logo-deitado-escuro.png" 
-                    alt="Receitas Milionárias" 
-                    className="h-10 w-auto object-contain"
-                  />
+                   {/* Mobile Logo */}
+                   <div className="flex items-center gap-2 select-none">
+                     <img 
+                       src="https://receitasmilionarias.com.br/static/images/logo.png" 
+                       alt="Logo" 
+                       className="h-10 w-10 object-contain"
+                     />
+                     <div className="flex flex-col text-left">
+                       <span className="font-serif font-bold text-rm-green text-xl leading-none">Receitas</span>
+                       <span className="font-serif font-bold text-rm-gold text-xl leading-none">Milionárias</span>
+                     </div>
+                   </div>
                 </div>
                 <h3 className="text-2xl font-serif font-bold text-rm-green">Bem-vindo à Academy</h3>
                 <p className="text-gray-500 text-sm mt-2">Área de membros para afiliados e alunos.</p>
@@ -381,16 +414,20 @@ function App() {
   // 2. Player Mode (Fullscreen)
   if (selectedCourse) {
     return (
-      <PlayerPage 
-        course={selectedCourse} 
-        onBack={() => setSelectedCourse(null)} 
-      />
+      <div className="h-full">
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+        <PlayerPage 
+          course={selectedCourse} 
+          onBack={() => setSelectedCourse(null)} 
+        />
+      </div>
     );
   }
 
   // 3. Main Layout
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
       <Header 
         user={user} 
         onLogout={handleLogout}

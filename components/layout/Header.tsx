@@ -46,13 +46,17 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
           <Menu size={26} className="text-gray-600 group-hover:text-rm-green transition-colors" />
         </button>
 
-        {/* Logo */}
+        {/* Composed Logo (Light Theme) */}
         <div className="flex items-center gap-2 select-none">
            <img 
-             src="https://receitasmilionarias.com.br/static/images/logo-deitado-escuro.png" 
-             alt="Receitas Milionárias" 
-             className="h-8 md:h-10 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
+             src="https://receitasmilionarias.com.br/static/images/logo.png" 
+             alt="Logo" 
+             className="h-9 w-9 object-contain"
            />
+           <div className="flex flex-col">
+             <span className="font-serif font-bold text-rm-green text-lg leading-none tracking-tight">Receitas</span>
+             <span className="font-serif font-bold text-rm-gold text-lg leading-none tracking-tight">Milionárias</span>
+           </div>
         </div>
       </div>
 

@@ -1,75 +1,145 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { User, UserRole } from '../../types';
-import { Bell, LogOut, User as UserIcon, Menu } from 'lucide-react';
+import { Bell, LogOut, User as UserIcon, Menu, ChevronDown, Settings, HelpCircle } from 'lucide-react';
 
 interface HeaderProps {
   user: User | null;
   onLogout: () => void;
   toggleSidebar: () => void;
+  onNavigate: (tab: string) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar }) => {
+const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNavigate }) => {
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleNavClick = (tab: string) => {
+    onNavigate(tab);
+    setIsProfileOpen(false);
+  };
+
   if (!user) return null;
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 fixed top-0 right-0 left-0 z-50 flex items-center justify-between px-4 lg:px-8 shadow-sm transition-all duration-300">
+    <header className="h-20 fixed top-0 right-0 left-0 z-40 px-4 lg:px-8 transition-all duration-300 bg-white/90 backdrop-blur-md border-b border-gray-200/50 shadow-sm flex items-center justify-between">
+      
+      {/* Left Section: Menu & Logo */}
       <div className="flex items-center gap-4 lg:gap-6 flex-1">
-        {/* Menu Button - Visible on All Screens now */}
         <button 
           onClick={toggleSidebar} 
-          className="text-rm-gray hover:text-rm-green focus:outline-none p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="group p-2.5 rounded-xl hover:bg-gray-100/80 active:bg-gray-200 transition-all duration-200 focus:outline-none"
           title="Abrir Menu"
         >
-          <Menu size={24} />
+          <Menu size={26} className="text-gray-600 group-hover:text-rm-green transition-colors" />
         </button>
 
         {/* Logo */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 select-none">
            <img 
              src="https://receitasmilionarias.com.br/static/images/logo-deitado-escuro.png" 
              alt="Receitas Milionárias" 
-             className="h-8 md:h-10 w-auto object-contain"
+             className="h-8 md:h-10 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
            />
         </div>
       </div>
 
-      <div className="flex items-center gap-4 lg:gap-6">
-        <button className="relative text-rm-gray hover:text-rm-gold transition-colors p-1">
+      {/* Right Section: Actions & Profile */}
+      <div className="flex items-center gap-3 lg:gap-6">
+        
+        {/* Notification Bell */}
+        <button className="relative p-2.5 text-gray-400 hover:text-rm-gold transition-colors hover:bg-gray-50 rounded-full group">
           <Bell size={22} />
-          <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full border border-white"></span>
+          <span className="absolute top-2 right-2.5 h-2 w-2 bg-red-500 rounded-full border border-white group-hover:scale-110 transition-transform"></span>
         </button>
         
-        <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-          <div className="hidden md:block text-right">
-            <p className="text-sm font-bold text-rm-green leading-none">{user.name}</p>
-            <p className="text-[10px] text-rm-gold font-bold uppercase tracking-wider mt-1">
-              {user.role === UserRole.ADMIN ? 'Instrutor' : 'Afiliado'}
-            </p>
-          </div>
-          
-          <div className="relative group cursor-pointer">
-            <div className="h-9 w-9 rounded-full bg-rm-green flex items-center justify-center text-rm-gold border-2 border-rm-gold shadow-sm overflow-hidden hover:scale-105 transition-transform">
-               {user.avatarUrl ? (
-                 <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
-               ) : (
-                 <UserIcon size={18} />
-               )}
+        {/* Divider */}
+        <div className="h-8 w-px bg-gray-200 mx-1 hidden md:block"></div>
+        
+        {/* User Profile Dropdown Container */}
+        <div className="relative" ref={dropdownRef}>
+          <button 
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className={`
+              flex items-center gap-3 pl-2 pr-2 py-1.5 rounded-full transition-all border
+              ${isProfileOpen ? 'bg-gray-50 border-gray-200 ring-2 ring-rm-gold/10' : 'border-transparent hover:bg-gray-50 hover:border-gray-100'}
+            `}
+          >
+            <div className="hidden md:flex flex-col items-end mr-1">
+              <span className="text-sm font-bold text-gray-700 leading-none">{user.name.split(' ')[0]}</span>
+              <span className="text-[10px] text-rm-gold font-bold uppercase tracking-wide mt-0.5">
+                {user.role === UserRole.ADMIN ? 'Produtor' : 'Afiliado'}
+              </span>
             </div>
             
-            {/* Quick Menu Dropdown */}
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 hidden group-hover:block animate-fade-in origin-top-right">
-               <div className="md:hidden px-4 py-2 border-b border-gray-100 mb-1">
-                 <p className="text-sm font-bold text-gray-800">{user.name}</p>
-                 <p className="text-xs text-gray-500">{user.role}</p>
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-rm-green to-[#0f241e] p-0.5 shadow-md">
+               <div className="h-full w-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                 {user.avatarUrl ? (
+                   <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                 ) : (
+                   <span className="font-serif font-bold text-rm-green text-lg">{user.name.charAt(0)}</span>
+                 )}
                </div>
-               <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-rm-green">Meu Perfil</button>
-               <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-rm-green">Preferências</button>
-               <div className="border-t border-gray-100 mt-1"></div>
-               <button onClick={onLogout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
-                 <LogOut size={14} /> Sair
-               </button>
             </div>
-          </div>
+            
+            <ChevronDown 
+              size={14} 
+              className={`text-gray-400 hidden md:block transition-transform duration-200 ${isProfileOpen ? 'rotate-180 text-rm-green' : ''}`} 
+            />
+          </button>
+          
+          {/* Dropdown Menu (Click based) */}
+          {isProfileOpen && (
+            <div className="absolute right-0 top-full mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 animate-fade-in origin-top-right z-50 ring-1 ring-black/5">
+               {/* Mobile Header in Dropdown */}
+               <div className="px-5 py-4 border-b border-gray-50 mb-2 bg-gray-50/50 md:hidden">
+                 <p className="text-sm font-bold text-gray-800">{user.name}</p>
+                 <p className="text-xs text-rm-gold font-bold">{user.email}</p>
+               </div>
+               
+               <div className="px-2 space-y-1">
+                 <button 
+                   onClick={() => handleNavClick('settings')}
+                   className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-3"
+                 >
+                   <UserIcon size={18} /> Meu Perfil
+                 </button>
+                 <button 
+                   onClick={() => handleNavClick('settings')}
+                   className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-3"
+                 >
+                   <Settings size={18} /> Configurações
+                 </button>
+                 <button 
+                   onClick={() => handleNavClick('settings')}
+                   className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-3"
+                 >
+                   <HelpCircle size={18} /> Ajuda & Suporte
+                 </button>
+               </div>
+               
+               <div className="border-t border-gray-100 my-2 mx-4"></div>
+               
+               <div className="px-2 pb-1">
+                 <button onClick={onLogout} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-3 transition-colors group">
+                   <LogOut size={18} className="group-hover:translate-x-1 transition-transform" /> 
+                   Sair do Sistema
+                 </button>
+               </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

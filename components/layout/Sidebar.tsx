@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, UserRole } from '../../types';
-import { Home, Search, BookOpen, Award, User as UserIcon, BarChart2, PlusCircle, List, ShieldCheck, ExternalLink, X } from 'lucide-react';
+import { Home, Search, BookOpen, Award, User as UserIcon, BarChart2, PlusCircle, List, ShieldCheck, ExternalLink, X, ChevronRight, HelpCircle } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,18 +13,18 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen, onClose }) => {
   if (!user) return null;
 
-  // Global Student Menu (Everyone sees this)
+  // Global Student Menu
   const studentMenu = [
-    { id: 'dashboard', label: 'Início', icon: Home },
+    { id: 'dashboard', label: 'Visão Geral', icon: Home },
     { id: 'courses', label: 'Catálogo de Cursos', icon: Search },
     { id: 'my-courses', label: 'Meus Cursos', icon: BookOpen },
-    { id: 'certificates', label: 'Meus Certificados', icon: Award },
+    { id: 'certificates', label: 'Certificados', icon: Award },
     { id: 'settings', label: 'Meu Perfil', icon: UserIcon },
   ];
 
-  // Instructor Menu (Only ADMIN sees this)
+  // Instructor Menu
   const instructorMenu = [
-    { id: 'instructor', label: 'Painel do Instrutor', icon: BarChart2 },
+    { id: 'instructor', label: 'Dashboard Produtor', icon: BarChart2 },
     { id: 'instructor-courses', label: 'Gerenciar Cursos', icon: List },
     { id: 'create-course', label: 'Criar Novo Curso', icon: PlusCircle },
     { id: 'affiliates', label: 'Afiliados', icon: ShieldCheck },
@@ -32,15 +32,15 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
 
   const handleItemClick = (tabId: string) => {
     onTabChange(tabId);
-    onClose(); // Always close after selection for a cleaner feel
+    onClose(); // Always close sidebar when an item is clicked
   };
 
   return (
     <>
-      {/* Backdrop (Visible on all screens when open) */}
+      {/* Backdrop */}
       <div 
         className={`
-          fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300
+          fixed inset-0 bg-[#1C3B32]/60 backdrop-blur-sm z-50 transition-opacity duration-500
           ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
         `}
         onClick={onClose}
@@ -48,89 +48,131 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
 
       {/* Sidebar Drawer */}
       <aside className={`
-        fixed top-0 left-0 z-50 h-screen w-72 bg-rm-green text-white shadow-2xl transform transition-transform duration-300 ease-out
+        fixed top-0 left-0 z-[60] h-screen w-80 bg-[#1C3B32] text-white shadow-[10px_0_30px_rgba(0,0,0,0.3)] transform transition-transform duration-300 ease-out border-r border-white/5
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
+        
+        {/* Decorative background accent */}
+        <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-rm-gold/20 rounded-full blur-[60px] pointer-events-none mix-blend-screen"></div>
+
         {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-white/10 bg-rm-greenLight/50">
-           <span className="font-serif font-bold text-lg text-rm-gold tracking-wide">MENU PRINCIPAL</span>
-           <button onClick={onClose} className="text-gray-300 hover:text-white transition-colors">
-             <X size={24} />
+        <div className="h-24 flex items-center justify-between px-8 border-b border-white/10 relative z-10">
+           <img 
+             src="https://receitasmilionarias.com.br/static/images/logo-deitado-claro.png" 
+             alt="Receitas Milionárias" 
+             className="h-9 w-auto object-contain drop-shadow-lg"
+           />
+           <button 
+             onClick={onClose} 
+             className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/20 hover:rotate-90 transition-all duration-300"
+           >
+             <X size={18} />
            </button>
         </div>
         
-        <div className="overflow-y-auto h-[calc(100vh-4rem)] py-6">
-          {/* Student Section */}
-          <div className="px-4 mb-2">
+        <div className="overflow-y-auto h-[calc(100vh-6rem)] py-8 px-5 relative z-10 custom-scrollbar flex flex-col">
+          
+          {/* Main Navigation */}
+          <div className="mb-8 flex-1">
+            <p className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 opacity-70">Menu Principal</p>
             <nav className="space-y-2">
-              {studentMenu.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleItemClick(item.id)}
-                  className={`
-                    w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group text-sm font-medium
-                    ${activeTab === item.id 
-                      ? 'bg-rm-gold text-white shadow-lg translate-x-1' 
-                      : 'text-gray-200 hover:bg-white/10 hover:text-white hover:translate-x-1'}
-                  `}
-                >
-                  <item.icon size={20} className={activeTab === item.id ? 'text-white' : 'text-rm-gold group-hover:text-white'} />
-                  <span>{item.label}</span>
-                </button>
-              ))}
+              {studentMenu.map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleItemClick(item.id)}
+                    className={`
+                      w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden
+                      ${isActive 
+                        ? 'bg-gradient-to-r from-rm-gold to-[#B08D2B] text-white shadow-lg translate-x-1' 
+                        : 'text-gray-300 hover:bg-white/5 hover:text-white hover:translate-x-1'}
+                    `}
+                  >
+                    {/* Active Indicator Glow */}
+                    {isActive && <div className="absolute inset-0 bg-white/10 opacity-50"></div>}
+
+                    <div className="flex items-center gap-4 relative z-10">
+                      <item.icon 
+                        size={20} 
+                        className={`transition-colors duration-300 ${isActive ? 'text-white' : 'text-rm-gold/80 group-hover:text-white'}`} 
+                      />
+                      <span className={`text-sm ${isActive ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
+                    </div>
+                    {isActive && <ChevronRight size={16} className="text-white/80 animate-pulse relative z-10" />}
+                  </button>
+                );
+              })}
             </nav>
           </div>
 
           {/* Instructor Section */}
           {user.role === UserRole.ADMIN && (
-            <div className="px-4 mt-8">
-               <div className="h-px bg-white/10 mx-4 mb-6"></div>
-              <p className="text-xs font-bold text-rm-gold uppercase tracking-wider mb-3 px-4 flex items-center gap-2 opacity-80">
-                Área do Produtor
+            <div className="mb-8 animate-fade-in border-t border-white/10 pt-6">
+              <p className="px-4 text-[10px] font-bold text-rm-gold uppercase tracking-widest mb-4 flex items-center gap-2">
+                 <ShieldCheck size={12} /> Área do Produtor
               </p>
               <nav className="space-y-2">
-                {instructorMenu.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleItemClick(item.id)}
-                    className={`
-                      w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group text-sm font-medium
-                      ${activeTab === item.id 
-                        ? 'bg-white/20 text-white font-bold shadow-md translate-x-1 border-l-4 border-rm-gold' 
-                        : 'text-gray-300 hover:bg-white/10 hover:text-white hover:translate-x-1'}
-                    `}
-                  >
-                    <item.icon size={20} className={activeTab === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'} />
-                    <span>{item.label}</span>
-                  </button>
-                ))}
+                {instructorMenu.map((item) => {
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleItemClick(item.id)}
+                      className={`
+                        w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group text-sm
+                        ${isActive 
+                          ? 'bg-white/10 text-white font-semibold border border-white/20 shadow-inner' 
+                          : 'text-gray-400 hover:bg-white/5 hover:text-white'}
+                      `}
+                    >
+                      <item.icon 
+                        size={18} 
+                        className={`${isActive ? 'text-rm-gold' : 'text-gray-500 group-hover:text-white'} transition-colors`} 
+                      />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
               </nav>
             </div>
           )}
 
-          {/* External Links Section */}
-          <div className="px-4 mt-8 mb-8">
-            <div className="h-px bg-white/10 mx-4 mb-6"></div>
-            <nav className="space-y-2">
+          {/* Footer / External Links */}
+          <div className="mt-auto">
+            <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6"></div>
+            
+            <nav className="space-y-3">
               <a
                 href="https://dashboard.receitasmilionarias.com.br/"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={onClose}
+                className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-all group border border-transparent hover:border-white/5"
+              >
+                <div className="p-1.5 rounded-lg bg-[#0f241e] group-hover:bg-rm-gold group-hover:text-white transition-colors border border-white/5">
+                   <ExternalLink size={14} />
+                </div>
+                <div className="flex flex-col text-left">
+                   <span className="font-medium text-gray-200">Painel de Vendas</span>
+                   <span className="text-[10px] text-gray-500 group-hover:text-gray-300">Acessar meus ganhos</span>
+                </div>
+              </a>
+              
+              <button 
+                onClick={() => handleItemClick('settings')}
                 className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-all group"
               >
-                <ExternalLink size={18} className="text-gray-500 group-hover:text-white" />
-                <span>Plataforma de Receitas</span>
-              </a>
-              <a
-                href="https://receitasmilionarias.com.br/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-all group"
-              >
-                <ExternalLink size={18} className="text-gray-500 group-hover:text-white" />
-                <span>Site Oficial</span>
-              </a>
+                 <div className="p-1.5 rounded-lg bg-[#0f241e] group-hover:bg-rm-greenLight group-hover:text-white transition-colors border border-white/5">
+                    <HelpCircle size={14} />
+                 </div>
+                 <span className="font-medium">Ajuda & Suporte</span>
+              </button>
             </nav>
+            
+            <div className="mt-8 px-2 text-center">
+              <p className="text-[10px] text-gray-600 font-medium">Versão 2.1.0 • Academy</p>
+            </div>
           </div>
         </div>
       </aside>

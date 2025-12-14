@@ -19,7 +19,7 @@ import AdminCourseCreate from './pages/AdminCourseCreate';
 
 import Button from './components/ui/Button';
 import Input from './components/ui/Input';
-import { ExternalLink, Globe, Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
+import { ExternalLink, Globe, Eye, EyeOff, Lock, Mail, ArrowRight, CheckCircle } from 'lucide-react';
 
 // Initial Mock Data
 const INITIAL_COURSES: Course[] = [
@@ -188,7 +188,7 @@ function App() {
     switch (activeTab) {
       // Global / Student Routes
       case 'dashboard':
-        return <DashboardPage />;
+        return <DashboardPage user={user!} />;
       case 'courses':
         return <CoursesPage courses={courses} onSelectCourse={setSelectedCourse} />;
       case 'my-courses':
@@ -240,9 +240,20 @@ function App() {
              <h2 className="text-5xl font-serif font-bold leading-tight">
                Transforme suas <span className="text-rm-gold">Receitas</span> em um Império.
              </h2>
-             <p className="text-lg opacity-90 font-light border-l-4 border-rm-gold pl-4">
-               Acesse a área exclusiva de membros, aprenda com os melhores e escale seus resultados no mercado digital.
-             </p>
+             <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="text-rm-gold mt-1" size={20} />
+                  <p className="text-lg opacity-90 font-light">Acesso exclusivo à Academy para afiliados.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="text-rm-gold mt-1" size={20} />
+                  <p className="text-lg opacity-90 font-light">Painel de vendas e materiais incluso.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="text-rm-gold mt-1" size={20} />
+                  <p className="text-lg opacity-90 font-light">Suporte premium e comunidade.</p>
+                </div>
+             </div>
            </div>
 
            <div className="relative z-20 text-xs text-white/50">
@@ -251,7 +262,7 @@ function App() {
         </div>
 
         {/* Right Side - Login Form */}
-        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 relative">
+        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 relative bg-gray-50/50">
           {/* Mobile Background (Absolute) */}
           <div 
             className="lg:hidden absolute inset-0 bg-cover bg-center z-0"
@@ -274,34 +285,34 @@ function App() {
                     className="h-10 w-auto object-contain"
                   />
                 </div>
-                <h3 className="text-2xl font-serif font-bold text-rm-green">Bem-vindo de volta!</h3>
-                <p className="text-gray-500 text-sm mt-2">Insira suas credenciais para acessar sua área de aluno.</p>
+                <h3 className="text-2xl font-serif font-bold text-rm-green">Bem-vindo à Academy</h3>
+                <p className="text-gray-500 text-sm mt-2">Área de membros para afiliados e alunos.</p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-5">
                  <div className="space-y-1">
-                   <label className="text-sm font-bold text-rm-green ml-1">E-mail</label>
-                   <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">E-mail</label>
+                   <div className="relative group">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-rm-gold transition-colors" size={18} />
                       <input 
                         type="email" 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-1 focus:ring-rm-gold outline-none transition-all text-sm"
+                        className="w-full pl-10 pr-4 py-3.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-4 focus:ring-rm-gold/10 outline-none transition-all text-sm font-medium"
                         placeholder="seu@email.com"
                       />
                    </div>
                  </div>
 
                  <div className="space-y-1">
-                   <label className="text-sm font-bold text-rm-green ml-1">Senha</label>
-                   <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Senha</label>
+                   <div className="relative group">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-rm-gold transition-colors" size={18} />
                       <input 
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-1 focus:ring-rm-gold outline-none transition-all text-sm"
+                        className="w-full pl-10 pr-10 py-3.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-4 focus:ring-rm-gold/10 outline-none transition-all text-sm font-medium"
                         placeholder="••••••••"
                       />
                       <button 
@@ -314,7 +325,7 @@ function App() {
                    </div>
                  </div>
 
-                 <div className="flex items-center justify-between text-xs lg:text-sm">
+                 <div className="flex items-center justify-between text-xs lg:text-sm pt-2">
                     <label className="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-rm-green">
                       <input 
                         type="checkbox" 
@@ -332,30 +343,30 @@ function App() {
                     variant="secondary" // Green Button
                     className="w-full py-4 text-base font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all group mt-4"
                  >
-                    Acessar Academy <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    Entrar no Sistema <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                  </Button>
               </form>
 
               <div className="mt-8 pt-6 border-t border-gray-100 text-center space-y-4">
                  <p className="text-sm text-gray-500">
-                   Ainda não é aluno? <a href="#" className="text-rm-green font-bold hover:text-rm-gold transition-colors">Matricule-se agora</a>
+                   Ainda não é afiliado? <a href="https://receitasmilionarias.com.br/cadastro.html" target="_blank" className="text-rm-green font-bold hover:text-rm-gold transition-colors underline decoration-2 decoration-transparent hover:decoration-rm-gold underline-offset-4">Cadastre-se Grátis</a>
                  </p>
                  
-                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-xs">
+                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-xs mt-6">
                    <a 
-                     href="https://receitasmilionarias.com.br/" 
+                     href="https://dashboard.receitasmilionarias.com.br/" 
                      target="_blank" 
                      rel="noopener noreferrer"
                      className="flex items-center gap-1.5 text-gray-400 hover:text-rm-green transition-colors"
                    >
-                     <ExternalLink size={12} /> Plataforma de Receitas
+                     <ExternalLink size={12} /> Painel de Vendas
                    </a>
                    <span className="hidden sm:inline text-gray-300">|</span>
                    <a 
                      href="#" 
                      className="flex items-center gap-1.5 text-gray-400 hover:text-rm-green transition-colors"
                    >
-                     <Globe size={12} /> Site Oficial
+                     <Globe size={12} /> Termos de Uso
                    </a>
                  </div>
               </div>
@@ -383,6 +394,7 @@ function App() {
       <Header 
         user={user} 
         onLogout={handleLogout}
+        onNavigate={navigateTo}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
       

@@ -186,6 +186,16 @@ function App() {
 
   // RENDER LOGIC
   const renderContent = () => {
+    // 0. Player Mode (Priority: If a course is selected, show player)
+    if (selectedCourse) {
+      return (
+        <PlayerPage 
+          course={selectedCourse} 
+          onBack={() => setSelectedCourse(null)} 
+        />
+      );
+    }
+
     // 1. Creator/Edit Mode
     if (activeTab === 'create-course' || isCreating || editingCourse) {
        return (
@@ -392,7 +402,18 @@ function App() {
     );
   }
 
-  // 3. Main Layout
+  // 3. Layout Handling
+  // If in Player Mode (Course Selected), render full screen without global navigation
+  if (selectedCourse) {
+    return (
+      <div className="min-h-screen bg-gray-900 font-sans">
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+        {renderContent()}
+      </div>
+    );
+  }
+
+  // Standard Dashboard Layout
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col w-full overflow-x-hidden">
       <ToastContainer toasts={toasts} removeToast={removeToast} />

@@ -29,6 +29,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
   const [category, setCategory] = useState(initialData?.category || 'Vendas');
   const [level, setLevel] = useState<Course['level']>(initialData?.level || 'Iniciante');
   const [price, setPrice] = useState(initialData?.price?.toString() || '');
+  const [status, setStatus] = useState<Course['status']>(initialData?.status || 'draft');
   
   const [modules, setModules] = useState<Module[]>(initialData?.modules || [
     { id: Date.now().toString(), title: 'Módulo 01: Introdução', lessons: [] }
@@ -116,8 +117,8 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
 
   // --- Calculations & Save ---
   const calculateTotalDuration = () => {
-    // Simple calculation logic
-    return '5h 30m'; // Placeholder or implement real calc
+    // Placeholder simple logic, can be improved to sum durations
+    return '5h 30m'; 
   };
 
   const handleSave = async () => {
@@ -133,11 +134,11 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
       id: initialData?.id || '',
       title,
       description,
-      thumbnailUrl, // Will be ignored by backend create, uses file
+      thumbnailUrl, 
       modules,
       totalDuration: calculateTotalDuration(),
       progress: 0,
-      status: 'draft', // Or published based on UI toggle (omitted for brevity)
+      status: status, // Use the selected status (draft/published)
       category,
       level,
       price: parseFloat(price) || 0
@@ -146,7 +147,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
     try {
         await api.createCourse(courseData, filesToUpload.current, currentUser);
         onShowToast('success', 'Curso Salvo!', 'Seu curso e arquivos foram enviados com sucesso.');
-        onSave(courseData); // Refresh parent
+        onSave(courseData); 
     } catch (error: any) {
         onShowToast('error', 'Falha ao salvar', error.message || 'Erro de conexão com o servidor.');
     } finally {
@@ -154,7 +155,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
     }
   };
 
-  // --- Module/Lesson Helper Functions (Same as before) ---
+  // --- Module/Lesson Helper Functions ---
   const addModule = () => {
     const newId = Date.now().toString();
     setModules([...modules, { id: newId, title: `Módulo ${modules.length + 1}`, lessons: [] }]);
@@ -176,9 +177,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
     setModules(modules.map(m => m.id === modId ? { ...m, lessons: m.lessons.filter(l => l.id !== lesId) } : m));
   };
   const removeAttachment = (modId: string, lesId: string, attId: string) => {
-      // Also remove from upload queue if it exists
       delete filesToUpload.current[`attachment_${attId}`];
-      
       const module = modules.find(m => m.id === modId);
       const lesson = module?.lessons.find(l => l.id === lesId);
       if (lesson) {
@@ -200,10 +199,30 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
           <button onClick={onCancel} className="p-2 hover:bg-gray-100 rounded-full text-gray-500"><ArrowLeft size={22} /></button>
           <h1 className="text-xl md:text-2xl font-serif font-bold text-rm-green">{initialData ? 'Editor' : 'Novo Curso'}</h1>
         </div>
-        <div className="flex gap-3">
+        
+        {/* Actions & Status Toggle */}
+        <div className="flex items-center gap-3">
+          {/* Status Switcher */}
+          <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+             <button 
+               onClick={() => setStatus('draft')}
+               className={`px-4 py-2 rounded-md text-xs font-bold transition-all ${status === 'draft' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+             >
+               Rascunho
+             </button>
+             <button 
+               onClick={() => setStatus('published')}
+               className={`px-4 py-2 rounded-md text-xs font-bold transition-all ${status === 'published' ? 'bg-green-500 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+             >
+               Publicado
+             </button>
+          </div>
+
+          <div className="h-8 w-px bg-gray-200 mx-1"></div>
+
           <Button variant="ghost" onClick={onCancel} disabled={isSaving}>Cancelar</Button>
-          <Button onClick={handleSave} isLoading={isSaving} className="px-8 shadow-lg shadow-rm-gold/20">
-            <Save size={18} className="mr-2" /> {isSaving ? 'Enviando Arquivos...' : 'Salvar Curso'}
+          <Button onClick={handleSave} isLoading={isSaving} className="px-6 shadow-lg shadow-rm-gold/20">
+            <Save size={18} className="mr-2" /> {isSaving ? 'Enviando...' : 'Salvar Curso'}
           </Button>
         </div>
       </div>

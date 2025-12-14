@@ -96,6 +96,7 @@ export const api = {
     const formData = new FormData();
 
     // 1. Basic Fields
+    if (course.id) formData.append('id', course.id); // Send ID if editing
     formData.append('email', user.email);
     formData.append('titulo', course.title);
     formData.append('descricao', course.description);

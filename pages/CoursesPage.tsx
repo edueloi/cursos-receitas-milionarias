@@ -1,16 +1,20 @@
 import React from 'react';
-import { Course } from '../types';
-import { Clock, PlayCircle, Filter, Search } from 'lucide-react';
+import { Course, User } from '../types';
+import { Clock, PlayCircle, Filter, Search, EyeOff } from 'lucide-react';
 import Button from '../components/ui/Button';
 
 interface CoursesPageProps {
   courses: Course[];
   onSelectCourse: (course: Course) => void;
+  user?: User | null;
 }
 
-const CoursesPage: React.FC<CoursesPageProps> = ({ courses, onSelectCourse }) => {
-  // Only show published courses in catalog
-  const publishedCourses = courses.filter(c => c.status === 'published');
+const CoursesPage: React.FC<CoursesPageProps> = ({ courses, onSelectCourse, user }) => {
+  // Logic: Show published courses OR drafts ONLY if the logged user is the creator
+  const visibleCourses = courses.filter(c => 
+    c.status === 'published' || 
+    (c.status === 'draft' && user && user.email === c.creatorEmail)
+  );
 
   return (
     <div className="p-6 lg:p-10 animate-fade-in pb-24 lg:pb-10">
@@ -40,23 +44,28 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ courses, onSelectCourse }) =>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {publishedCourses.map((course) => (
+        {visibleCourses.map((course) => (
           <div 
             key={course.id}
-            className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full"
+            className={`group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border flex flex-col h-full ${course.status === 'draft' ? 'border-yellow-300 ring-2 ring-yellow-100' : 'border-gray-100'}`}
           >
             {/* Thumbnail */}
             <div className="relative h-48 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
               <img 
-                src={course.thumbnailUrl} 
+                src={course.thumbnailUrl || 'https://via.placeholder.com/400x300?text=Sem+Capa'} 
                 alt={course.title}
                 className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
               />
-              <div className="absolute top-4 left-4 z-20">
+              <div className="absolute top-4 left-4 z-20 flex gap-2">
                 <span className="px-2 py-1 bg-white/90 backdrop-blur-sm text-rm-green text-xs font-bold rounded">
                   {course.category || 'Geral'}
                 </span>
+                {course.status === 'draft' && (
+                  <span className="px-2 py-1 bg-yellow-400 text-black text-xs font-bold rounded flex items-center gap-1">
+                    <EyeOff size={10} /> Rascunho
+                  </span>
+                )}
               </div>
             </div>
 
@@ -85,12 +94,12 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ courses, onSelectCourse }) =>
                 variant="primary"
                 className="w-full justify-center"
               >
-                Começar Agora
+                {course.status === 'draft' ? 'Pré-visualizar' : 'Começar Agora'}
               </Button>
             </div>
           </div>
         ))}
-        {publishedCourses.length === 0 && (
+        {visibleCourses.length === 0 && (
           <div className="col-span-full text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
              <p className="text-gray-500">Nenhum curso encontrado com estes filtros.</p>
           </div>

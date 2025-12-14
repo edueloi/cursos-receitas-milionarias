@@ -289,7 +289,7 @@ function App() {
       case 'dashboard':
         return <DashboardPage user={user!} />;
       case 'courses':
-        return <CoursesPage courses={courses} onSelectCourse={setSelectedCourse} />;
+        return <CoursesPage courses={courses} onSelectCourse={setSelectedCourse} user={user} />;
       case 'my-courses':
         return <MyCoursesPage courses={courses} onSelectCourse={setSelectedCourse} />;
       case 'certificates':

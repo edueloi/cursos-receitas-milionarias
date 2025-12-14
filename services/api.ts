@@ -3,6 +3,32 @@ import { User, UserRole, Course, Module, Lesson, Attachment } from '../types';
 const API_URL = 'https://api.receitasmilionarias.com.br';
 const COURSE_API_URL = 'https://cursos-api.receitasmilionarias.com.br';
 
+// Helper to calculate duration from modules
+const calculateTotalDuration = (modules: any[]): string => {
+  let totalSeconds = 0;
+  
+  modules.forEach(mod => {
+    const conteudos = mod.conteudos || mod.lessons || [];
+    conteudos.forEach((lesson: any) => {
+      const durationStr = lesson.duracao || lesson.duration || "00:00";
+      const parts = durationStr.split(':').map(Number);
+      
+      if (parts.length === 3) {
+        totalSeconds += parts[0] * 3600 + parts[1] * 60 + parts[2];
+      } else if (parts.length === 2) {
+        totalSeconds += parts[0] * 60 + parts[1];
+      }
+    });
+  });
+
+  if (totalSeconds === 0) return '0h 0m';
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  return `${hours}h ${minutes}m`;
+};
+
 export const api = {
   // --- Auth & User (Existing) ---
   login: async (email: string, senha: string) => {
@@ -63,8 +89,9 @@ export const api = {
         level: c.nivel,
         price: c.preco,
         status: c.rascunho ? 'draft' : 'published',
-        totalDuration: '0h 0m', // Calculate based on modules if needed
-        progress: 0, // Logic for user progress would be separate
+        creatorEmail: c.email, // Important for draft visibility
+        totalDuration: calculateTotalDuration(c.modulos || []), // Calculate automatically
+        progress: 0, 
         modules: (c.modulos || []).map((m: any, mIdx: number) => ({
           id: `mod-${mIdx}`,
           title: m.titulo,

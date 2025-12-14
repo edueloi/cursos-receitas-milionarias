@@ -60,4 +60,5 @@ export interface Course {
   level?: 'Iniciante' | 'Intermediário' | 'Avançado';
   status: 'draft' | 'published' | 'archived';
   price?: number;
+  creatorEmail?: string; // New field for visibility logic
 }

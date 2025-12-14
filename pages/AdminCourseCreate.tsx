@@ -117,8 +117,32 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
 
   // --- Calculations & Save ---
   const calculateTotalDuration = () => {
-    // Placeholder simple logic, can be improved to sum durations
-    return '5h 30m'; 
+    let totalSeconds = 0;
+    
+    modules.forEach(mod => {
+      mod.lessons.forEach(lesson => {
+        // Expected format "MM:SS" or "HH:MM:SS"
+        // If user input is missing or weird, assume 0
+        const durationStr = lesson.duration || "00:00";
+        const parts = durationStr.split(':').map(Number);
+        
+        if (parts.length === 3) {
+           totalSeconds += parts[0] * 3600 + parts[1] * 60 + parts[2];
+        } else if (parts.length === 2) {
+           totalSeconds += parts[0] * 60 + parts[1];
+        } else if (parts.length === 1 && !isNaN(parts[0])) {
+           // Treated as minutes if just a number
+           totalSeconds += parts[0] * 60;
+        }
+      });
+    });
+
+    if (totalSeconds === 0) return '0h 0m';
+
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+    return `${hours}h ${minutes}m`;
   };
 
   const handleSave = async () => {
@@ -130,13 +154,15 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
 
     setIsSaving(true);
     
+    const calculatedDuration = calculateTotalDuration();
+
     const courseData: Course = {
       id: initialData?.id || '',
       title,
       description,
       thumbnailUrl, 
       modules,
-      totalDuration: calculateTotalDuration(),
+      totalDuration: calculatedDuration,
       progress: 0,
       status: status, // Use the selected status (draft/published)
       category,
@@ -166,7 +192,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
   const toggleModuleExpand = (id: string) => setExpandedModules(p => ({ ...p, [id]: !p[id] }));
   
   const addLesson = (modId: string) => {
-    const newL: Lesson = { id: Date.now().toString(), title: 'Nova Aula', duration: '00:00', videoType: 'upload' };
+    const newL: Lesson = { id: Date.now().toString(), title: 'Nova Aula', duration: '05:00', videoType: 'upload' };
     setModules(modules.map(m => m.id === modId ? { ...m, lessons: [...m.lessons, newL] } : m));
     setEditingLessonId(newL.id);
   };
@@ -314,7 +340,9 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
                                {editingLessonId === lesson.id && (
                                   <div className="mt-4 pt-4 border-t border-gray-100 space-y-4 animate-fade-in">
                                      <Input label="Título" value={lesson.title} onChange={e => updateLesson(module.id, lesson.id, { title: e.target.value })} />
-                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center cursor-pointer hover:border-rm-gold" onClick={() => triggerLessonVideoUpload(module.id, lesson.id)}>
+                                     <Input label="Duração (MM:SS)" value={lesson.duration} onChange={e => updateLesson(module.id, lesson.id, { duration: e.target.value })} placeholder="Ex: 10:00" className="mt-2" />
+                                     
+                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center cursor-pointer hover:border-rm-gold mt-4" onClick={() => triggerLessonVideoUpload(module.id, lesson.id)}>
                                         {lesson.videoUrl ? <p className="text-sm text-green-600 font-bold flex items-center justify-center gap-2"><CheckSquare size={16}/> Vídeo Selecionado</p> : <p className="text-sm text-gray-500">Clique para selecionar vídeo (MP4)</p>}
                                      </div>
                                      <div>

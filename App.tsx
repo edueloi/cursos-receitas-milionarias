@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, UserRole, Course } from './types';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
+import { api } from './services/api'; // Import API service
 
 // Pages
 import DashboardPage from './pages/DashboardPage';
@@ -22,7 +23,9 @@ import Button from './components/ui/Button';
 import ToastContainer, { ToastMessage } from './components/ui/Toast';
 import { ExternalLink, Globe, Eye, EyeOff, Lock, Mail, ArrowRight, CheckCircle } from 'lucide-react';
 
-// Initial Mock Data
+// Initial Mock Data with Requested YouTube Video
+const YOUTUBE_VIDEO_URL = "https://www.youtube.com/embed/_tnDpt9jSWM";
+
 const INITIAL_COURSES: Course[] = [
   {
     id: '1',
@@ -39,15 +42,36 @@ const INITIAL_COURSES: Course[] = [
         title: 'Fundamentos do Tráfego Orgânico',
         description: 'Conceitos base para iniciar.',
         lessons: [
-          { id: 'l1', title: 'Como funciona o algoritmo', duration: '12:00', completed: true },
-          { id: 'l2', title: 'Criando conteúdo viral', duration: '15:30', completed: false },
+          { 
+            id: 'l1', 
+            title: 'Como funciona o algoritmo', 
+            duration: '12:00', 
+            completed: true, 
+            videoType: 'embed',
+            videoUrl: YOUTUBE_VIDEO_URL 
+          },
+          { 
+            id: 'l2', 
+            title: 'Criando conteúdo viral', 
+            duration: '15:30', 
+            completed: false,
+            videoType: 'embed',
+            videoUrl: YOUTUBE_VIDEO_URL
+          },
         ]
       },
       {
         id: 'm2',
         title: 'Copywriting para Legendas',
         lessons: [
-          { id: 'l3', title: 'Gatilhos mentais', duration: '20:00', completed: false },
+          { 
+            id: 'l3', 
+            title: 'Gatilhos mentais', 
+            duration: '20:00', 
+            completed: false,
+            videoType: 'embed',
+            videoUrl: YOUTUBE_VIDEO_URL
+          },
         ]
       }
     ]
@@ -66,7 +90,14 @@ const INITIAL_COURSES: Course[] = [
         id: 'm1',
         title: 'Precificação Correta',
         lessons: [
-          { id: 'l1', title: 'Planilha de custos', duration: '45:00', completed: true },
+          { 
+            id: 'l1', 
+            title: 'Planilha de custos', 
+            duration: '45:00', 
+            completed: true,
+            videoType: 'embed',
+            videoUrl: YOUTUBE_VIDEO_URL
+          },
         ]
       }
     ]
@@ -89,6 +120,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Login Form State
   const [email, setEmail] = useState('');
@@ -112,24 +144,32 @@ function App() {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  // Simulate persistent login or check
-  const handleLogin = (e?: React.FormEvent) => {
+  // Real Login Logic
+  const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    setIsLoading(true);
     
-    // Simple mock logic to determine role based on email or default to Affiliate
-    // In a real app, this would come from the backend response
-    const role = email.includes('admin') ? UserRole.ADMIN : UserRole.AFFILIATE;
-
-    setUser({
-      id: '1',
-      name: role === UserRole.ADMIN ? 'Chef Fundador' : 'Jefferson',
-      email: email || 'jefferson@receitasmilionarias.com.br',
-      role: role
-    });
-
-    addToast('success', 'Login realizado com sucesso!', `Bem-vindo de volta, ${role === UserRole.ADMIN ? 'Chef' : 'Jefferson'}.`);
-
-    setActiveTab('dashboard');
+    try {
+      // 1. Authenticate
+      const authData = await api.login(email, password);
+      
+      if (authData.token) {
+        // Store token (in memory for now, or localStorage if persistence needed)
+        const token = authData.token;
+        
+        // 2. Fetch User Profile
+        const userData = await api.getMe(token);
+        
+        setUser(userData);
+        addToast('success', 'Login realizado com sucesso!', `Bem-vindo, ${userData.name.split(' ')[0]}.`);
+        setActiveTab('dashboard');
+      }
+    } catch (error: any) {
+      console.error(error);
+      addToast('error', 'Falha no Login', error.message || 'Verifique suas credenciais e tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -331,6 +371,7 @@ function App() {
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full pl-10 pr-4 py-3.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-4 focus:ring-rm-gold/10 outline-none transition-all text-sm font-medium"
                         placeholder="seu@email.com"
+                        required
                       />
                    </div>
                  </div>
@@ -345,6 +386,7 @@ function App() {
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full pl-10 pr-10 py-3.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-4 focus:ring-rm-gold/10 outline-none transition-all text-sm font-medium"
                         placeholder="••••••••"
+                        required
                       />
                       <button 
                         type="button" 
@@ -372,9 +414,10 @@ function App() {
                  <Button 
                     type="submit"
                     variant="secondary" // Green Button
+                    isLoading={isLoading}
                     className="w-full py-4 text-base font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all group mt-4"
                  >
-                    Entrar no Sistema <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    {isLoading ? 'Entrando...' : 'Entrar no Sistema'} {!isLoading && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
                  </Button>
               </form>
 

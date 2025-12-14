@@ -11,6 +11,7 @@ interface PlayerPageProps {
 const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
   const [activeModuleId, setActiveModuleId] = useState<string>(course.modules[0]?.id);
   const [activeLesson, setActiveLesson] = useState<Lesson>(course.modules[0]?.lessons[0]);
+  const [isPlaying, setIsPlaying] = useState(false);
   
   // Default closed on mobile, open on desktop
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -20,6 +21,11 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
       setIsSidebarOpen(true);
     }
   }, []);
+
+  // Reset playing state when lesson changes
+  useEffect(() => {
+    setIsPlaying(false);
+  }, [activeLesson]);
 
   const [activeTab, setActiveTab] = useState<'overview' | 'materials' | 'comments'>('overview');
 
@@ -74,18 +80,34 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
           {/* Cinema Mode Video Container */}
           <div className="bg-black w-full flex-shrink-0 relative group">
              <div className="aspect-video w-full max-h-[75vh] mx-auto bg-black flex items-center justify-center relative">
-                {/* Mock Video Element */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <img 
-                      src={course.thumbnailUrl} 
-                      alt="Poster" 
-                      className="absolute inset-0 w-full h-full object-cover opacity-40 blur-sm"
-                    />
-                    <div className="absolute inset-0 bg-black/40"></div>
-                    <button className="relative z-20 bg-rm-gold hover:bg-rm-goldHover text-white rounded-full p-4 md:p-6 shadow-2xl hover:scale-110 transition-transform group-hover:shadow-rm-gold/50">
-                      <Play size={32} md:size={48} fill="currentColor" className="ml-1" />
-                    </button>
-                 </div>
+                
+                {/* Video Logic */}
+                {isPlaying && activeLesson.videoType === 'embed' && activeLesson.videoUrl ? (
+                  <iframe 
+                    src={`${activeLesson.videoUrl}?autoplay=1&modestbranding=1&rel=0`} 
+                    title={activeLesson.title}
+                    className="w-full h-full absolute inset-0 border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                  />
+                ) : (
+                  /* Placeholder / Start Screen */
+                  <div className="absolute inset-0 flex items-center justify-center">
+                      <img 
+                        src={course.thumbnailUrl} 
+                        alt="Poster" 
+                        className="absolute inset-0 w-full h-full object-cover opacity-40 blur-sm"
+                      />
+                      <div className="absolute inset-0 bg-black/40"></div>
+                      <button 
+                        onClick={() => setIsPlaying(true)}
+                        className="relative z-20 bg-rm-gold hover:bg-rm-goldHover text-white rounded-full p-4 md:p-6 shadow-2xl hover:scale-110 transition-transform group-hover:shadow-rm-gold/50"
+                      >
+                        <Play size={32} md:size={48} fill="currentColor" className="ml-1" />
+                      </button>
+                   </div>
+                )}
+
              </div>
           </div>
 
@@ -234,6 +256,7 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
                                key={lesson.id}
                                onClick={() => {
                                    setActiveLesson(lesson);
+                                   setIsPlaying(true); // Auto play when selecting lesson
                                    if (window.innerWidth < 1024) setIsSidebarOpen(false); // Close on mobile selection
                                }}
                                className={`

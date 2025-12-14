@@ -163,7 +163,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
                    <ExternalLink size={14} />
                 </div>
                 <div className="flex flex-col text-left">
-                   <span className="font-medium text-gray-200">Painel de Vendas</span>
+                   <span className="font-medium text-gray-200">Painel Afiliado</span>
                    <span className="text-[10px] text-gray-500 group-hover:text-gray-300">Acessar meus ganhos</span>
                 </div>
               </a>

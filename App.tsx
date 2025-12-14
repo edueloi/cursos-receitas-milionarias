@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, UserRole, Course } from './types';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
@@ -134,6 +134,28 @@ function App() {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null); // For editing
   const [isCreating, setIsCreating] = useState(false); // For creating new
 
+  // --- Auto Login Logic ---
+  useEffect(() => {
+    const checkSession = async () => {
+      const storedToken = localStorage.getItem('rm_token') || sessionStorage.getItem('rm_token');
+      if (storedToken) {
+        setIsLoading(true);
+        try {
+          const userData = await api.getMe(storedToken);
+          setUser(userData);
+          // Only show toast if it's a fresh load, not necessary but nice
+        } catch (error) {
+          console.error("Session expired", error);
+          localStorage.removeItem('rm_token');
+          sessionStorage.removeItem('rm_token');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    checkSession();
+  }, []);
+
   // Toast Handler
   const addToast = (type: ToastMessage['type'], title: string, message?: string) => {
     const id = Date.now().toString();
@@ -154,10 +176,16 @@ function App() {
       const authData = await api.login(email, password);
       
       if (authData.token) {
-        // Store token (in memory for now, or localStorage if persistence needed)
         const token = authData.token;
         
-        // 2. Fetch User Profile
+        // 2. Persist Token based on "Remember Me"
+        if (rememberMe) {
+          localStorage.setItem('rm_token', token);
+        } else {
+          sessionStorage.setItem('rm_token', token);
+        }
+
+        // 3. Fetch User Profile
         const userData = await api.getMe(token);
         
         setUser(userData);
@@ -173,6 +201,8 @@ function App() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('rm_token');
+    sessionStorage.removeItem('rm_token');
     setUser(null);
     setSelectedCourse(null);
     setEditingCourse(null);
@@ -279,23 +309,21 @@ function App() {
     }
   };
 
-  // 1. Login Screen (New Premium Design)
+  // 1. Login Screen (New Premium Design - Mobile First)
   if (!user) {
     return (
-      <div className="min-h-screen w-full flex bg-rm-green font-sans overflow-hidden">
+      <div className="min-h-screen w-full flex font-sans overflow-hidden">
         <ToastContainer toasts={toasts} removeToast={removeToast} />
         
-        {/* Left Side - Image & Branding (Desktop Only) */}
-        <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 overflow-hidden border-r-4 border-rm-gold">
+        {/* Left Side (Desktop Only) - Image & Branding */}
+        <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 overflow-hidden border-r-4 border-rm-gold bg-[#1C3B32]">
            {/* Background Image */}
            <div 
-             className="absolute inset-0 bg-cover bg-center z-0 scale-105"
+             className="absolute inset-0 bg-cover bg-center z-0 opacity-40 scale-105"
              style={{ 
                backgroundImage: 'url("https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2070&auto=format&fit=crop")',
              }}
-           >
-             <div className="absolute inset-0 bg-gradient-to-t from-rm-green via-rm-green/80 to-rm-green/40 mix-blend-multiply" />
-           </div>
+           ></div>
            
            {/* Content */}
            <div className="relative z-20">
@@ -323,11 +351,7 @@ function App() {
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle className="text-rm-gold mt-1" size={20} />
-                  <p className="text-lg opacity-90 font-light">Painel de vendas e materiais incluso.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="text-rm-gold mt-1" size={20} />
-                  <p className="text-lg opacity-90 font-light">Suporte premium e comunidade.</p>
+                  <p className="text-lg opacity-90 font-light">Painel Afiliado e materiais inclusos.</p>
                 </div>
              </div>
            </div>
@@ -337,108 +361,121 @@ function App() {
            </div>
         </div>
 
-        {/* Right Side - Login Form (Desktop & Mobile) */}
-        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 lg:p-12 relative bg-gradient-to-b from-[#1C3B32] to-[#0f241e] lg:bg-none lg:bg-gray-50/50">
+        {/* Right Side / Mobile Full Screen - Login Form */}
+        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen bg-[#1C3B32] lg:bg-[#F8F9FA] relative">
           
-          <div className="w-full max-w-md z-10 flex flex-col items-center">
-            {/* Mobile Only Header Logo */}
-            <div className="lg:hidden mb-8 flex flex-col items-center">
+          {/* Mobile Decor (Background Gradient) */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1C3B32] to-[#0f241e] lg:hidden z-0"></div>
+          
+          <div className="w-full max-w-md z-10 px-6 py-8 flex flex-col h-full lg:h-auto justify-center">
+            
+            {/* Logo centered above card on Mobile */}
+            <div className="lg:hidden flex flex-col items-center mb-8 animate-fade-in">
                  <img 
                    src="https://receitasmilionarias.com.br/static/images/logo.png" 
                    alt="Logo" 
-                   className="h-16 w-16 object-contain mb-3 drop-shadow-md"
+                   className="h-20 w-20 object-contain mb-4 drop-shadow-lg"
                  />
-                 <h1 className="font-serif font-bold text-2xl text-white">Receitas <span className="text-rm-gold">Milionárias</span></h1>
-                 <p className="text-white/60 text-sm mt-1">Academy</p>
+                 <h1 className="font-serif font-bold text-3xl text-white tracking-wide">Receitas <span className="text-rm-gold">Milionárias</span></h1>
+                 <p className="text-white/70 text-sm mt-1 uppercase tracking-widest font-medium">Academy</p>
             </div>
 
-            {/* Card Container */}
-            <div className="w-full bg-white rounded-2xl shadow-2xl p-8 lg:p-12 border-t-8 border-rm-gold animate-fade-in-up">
+            {/* Login Card */}
+            <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 w-full animate-fade-in-up border-t-8 lg:border-t-0 border-rm-gold lg:border-none">
               
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-serif font-bold text-rm-green">Acessar Plataforma</h3>
-                <p className="text-gray-500 text-sm mt-2">Digite suas credenciais para continuar.</p>
+              <div className="text-center mb-8 hidden lg:block">
+                <h3 className="text-2xl font-serif font-bold text-rm-green">Receitas Milionárias</h3>
+                <p className="text-gray-500 text-sm mt-2 font-medium tracking-wide">Academy</p>
+              </div>
+
+              {/* Mobile Title inside card */}
+              <div className="text-center mb-6 lg:hidden">
+                 <h3 className="text-xl font-bold text-gray-800">Bem-vindo de volta!</h3>
+                 <p className="text-gray-500 text-xs mt-1">Insira seus dados para acessar.</p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-5">
-                 <div className="space-y-1">
-                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">E-mail</label>
+                 <div className="space-y-1.5">
+                   <label className="text-xs font-bold text-gray-600 uppercase tracking-wider ml-1">E-mail</label>
                    <div className="relative group">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-rm-gold transition-colors" size={18} />
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-rm-gold transition-colors" size={20} />
                       <input 
                         type="email" 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-4 focus:ring-rm-gold/10 outline-none transition-all text-sm font-medium"
+                        className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-4 focus:ring-rm-gold/10 outline-none transition-all text-base font-medium text-gray-800 placeholder-gray-400"
                         placeholder="seu@email.com"
                         required
                       />
                    </div>
                  </div>
 
-                 <div className="space-y-1">
-                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Senha</label>
+                 <div className="space-y-1.5">
+                   <label className="text-xs font-bold text-gray-600 uppercase tracking-wider ml-1">Senha</label>
                    <div className="relative group">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-rm-gold transition-colors" size={18} />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-rm-gold transition-colors" size={20} />
                       <input 
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-10 pr-10 py-3.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-4 focus:ring-rm-gold/10 outline-none transition-all text-sm font-medium"
+                        className="w-full pl-12 pr-12 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-4 focus:ring-rm-gold/10 outline-none transition-all text-base font-medium text-gray-800 placeholder-gray-400"
                         placeholder="••••••••"
                         required
                       />
                       <button 
                         type="button" 
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rm-green"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rm-green p-1"
                       >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
                    </div>
                  </div>
 
-                 <div className="flex items-center justify-between text-xs lg:text-sm pt-2">
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-rm-green">
+                 <div className="flex items-center justify-between text-sm pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-rm-green py-2 select-none">
                       <input 
                         type="checkbox" 
-                        className="rounded text-rm-green focus:ring-rm-gold border-gray-300" 
+                        className="w-4 h-4 rounded text-rm-green focus:ring-rm-gold border-gray-300 cursor-pointer" 
                         checked={rememberMe}
                         onChange={(e) => setRememberMe(e.target.checked)}
                       />
                       <span>Lembrar-me</span>
                     </label>
-                    <a href="#" className="text-rm-gold hover:underline font-semibold">Esqueceu a senha?</a>
+                    <a href="#" className="text-rm-gold hover:underline font-bold text-sm">Esqueceu a senha?</a>
                  </div>
 
                  <Button 
                     type="submit"
-                    variant="secondary" // Green Button
+                    variant="secondary" 
                     isLoading={isLoading}
-                    className="w-full py-4 text-base font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all group mt-4"
+                    className="w-full py-4 text-base font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all group mt-4 rounded-xl"
                  >
-                    {isLoading ? 'Entrando...' : 'Entrar no Sistema'} {!isLoading && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
+                    {isLoading ? 'Entrando...' : 'Entrar no Sistema'} {!isLoading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform ml-1" />}
                  </Button>
               </form>
 
-              <div className="mt-8 pt-6 border-t border-gray-100 text-center space-y-4">
-                 <p className="text-sm text-gray-500">
-                   Ainda não é afiliado? <a href="https://receitasmilionarias.com.br/cadastro.html" target="_blank" className="text-rm-green font-bold hover:text-rm-gold transition-colors underline decoration-2 decoration-transparent hover:decoration-rm-gold underline-offset-4">Cadastre-se Grátis</a>
+              <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                 <p className="text-sm text-gray-500 mb-6">
+                   Ainda não tem conta? <a href="https://receitasmilionarias.com.br/cadastro.html" target="_blank" className="text-rm-green font-bold hover:text-rm-gold transition-colors">Cadastre-se</a>
                  </p>
                  
-                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-xs mt-6">
-                   <a 
-                     href="https://dashboard.receitasmilionarias.com.br/" 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     className="flex items-center gap-1.5 text-gray-400 hover:text-rm-green transition-colors"
-                   >
-                     <ExternalLink size={12} /> Painel de Vendas
-                   </a>
-                 </div>
+                 <a 
+                   href="https://dashboard.receitasmilionarias.com.br/" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-rm-green transition-colors text-xs font-medium border border-gray-200"
+                 >
+                   <ExternalLink size={14} /> Ir para Painel Afiliado
+                 </a>
               </div>
-
             </div>
+            
+            {/* Mobile Footer */}
+            <div className="lg:hidden mt-8 text-center text-white/40 text-[10px] font-medium">
+               &copy; 2024 Receitas Milionárias Academy
+            </div>
+
           </div>
         </div>
       </div>

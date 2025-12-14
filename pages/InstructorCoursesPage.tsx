@@ -10,19 +10,70 @@ interface InstructorCoursesPageProps {
 }
 
 const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ courses, onEditCourse, onCreateCourse }) => {
+  
+  const renderStatusBadge = (status: string) => (
+     <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+        status === 'published' ? 'bg-green-100 text-green-700' : 
+        status === 'draft' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'
+     }`}>
+        {status === 'published' ? 'Publicado' : 'Rascunho'}
+     </span>
+  );
+
   return (
     <div className="p-6 lg:p-10 animate-fade-in pb-24 lg:pb-10">
-      <div className="flex justify-between items-center mb-8">
+      {/* Header Responsivo */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-4 mb-8">
         <div>
           <h2 className="text-3xl font-serif font-bold text-rm-green mb-2">Gerenciar Cursos</h2>
           <p className="text-gray-600">Edite, publique ou arquive seus conteúdos.</p>
         </div>
-        <Button onClick={onCreateCourse}>
+        <Button onClick={onCreateCourse} className="w-full md:w-auto justify-center shadow-lg">
            <Plus size={18} className="mr-2" /> Novo Curso
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Mobile View: Cards */}
+      <div className="md:hidden space-y-4">
+         {courses.map(course => (
+            <div key={course.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-4">
+               <div className="flex items-start gap-4">
+                  <img 
+                    src={course.thumbnailUrl} 
+                    className="w-20 h-20 rounded-lg object-cover flex-shrink-0 shadow-sm" 
+                    alt={course.title} 
+                  />
+                  <div className="flex-1 min-w-0">
+                     <h3 className="font-bold text-gray-800 text-sm mb-2 leading-tight line-clamp-2">{course.title}</h3>
+                     <div className="flex flex-wrap items-center gap-2 mb-1">
+                        {renderStatusBadge(course.status)}
+                     </div>
+                     <p className="text-xs text-gray-400">{course.modules.length} módulos</p>
+                  </div>
+               </div>
+               
+               <div className="grid grid-cols-2 gap-3 border-t border-gray-100 pt-3">
+                  <button 
+                    onClick={() => onEditCourse(course)} 
+                    className="flex items-center justify-center gap-2 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                  >
+                     <Edit size={16} /> Editar
+                  </button>
+                  <button className="flex items-center justify-center gap-2 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+                     <Eye size={16} /> Ver
+                  </button>
+               </div>
+            </div>
+         ))}
+         {courses.length === 0 && (
+             <div className="p-8 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
+                Você ainda não criou nenhum curso.
+             </div>
+         )}
+      </div>
+
+      {/* Desktop View: Table */}
+      <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
          <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 text-gray-500 font-bold border-b border-gray-200">
                <tr>
@@ -34,28 +85,23 @@ const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ courses, 
             </thead>
             <tbody className="divide-y divide-gray-100">
                {courses.map(course => (
-                  <tr key={course.id} className="hover:bg-gray-50">
+                  <tr key={course.id} className="hover:bg-gray-50 transition-colors">
                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                           <img src={course.thumbnailUrl} className="w-10 h-10 rounded object-cover" alt="" />
+                           <img src={course.thumbnailUrl} className="w-10 h-10 rounded object-cover shadow-sm" alt="" />
                            <span className="font-semibold text-gray-800">{course.title}</span>
                         </div>
                      </td>
                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                           course.status === 'published' ? 'bg-green-100 text-green-700' : 
-                           course.status === 'draft' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'
-                        }`}>
-                           {course.status === 'published' ? 'Publicado' : 'Rascunho'}
-                        </span>
+                        {renderStatusBadge(course.status)}
                      </td>
                      <td className="px-6 py-4 text-gray-500">{course.modules.length} módulos</td>
                      <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                           <button onClick={() => onEditCourse(course)} className="p-2 hover:bg-gray-200 rounded text-gray-600" title="Editar">
+                           <button onClick={() => onEditCourse(course)} className="p-2 hover:bg-gray-200 rounded text-gray-600 transition-colors" title="Editar">
                               <Edit size={16} />
                            </button>
-                           <button className="p-2 hover:bg-gray-200 rounded text-gray-600" title="Ver como aluno">
+                           <button className="p-2 hover:bg-gray-200 rounded text-gray-600 transition-colors" title="Ver como aluno">
                               <Eye size={16} />
                            </button>
                         </div>

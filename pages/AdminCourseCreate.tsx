@@ -533,17 +533,20 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
                                        <Video size={16} className="text-rm-gold" /> Origem do Vídeo
                                      </h4>
                                      
-                                     <div className="flex gap-2 mb-4">
+                                     {/* Layout fixed: flex-col on mobile, flex-row on sm+ */}
+                                     <div className="flex flex-col sm:flex-row gap-3 mb-4">
                                         {['upload', 'embed'].map((type) => (
                                           <button
                                             key={type}
                                             onClick={() => updateLesson(module.id, lesson.id, { videoType: type as any })}
-                                            className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
-                                              lesson.videoType === type 
-                                                ? 'bg-rm-green text-white border-rm-green' 
-                                                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
-                                            }`}
+                                            className={`
+                                              flex-1 px-4 py-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2
+                                              ${lesson.videoType === type 
+                                                ? 'bg-rm-green text-white border-rm-green shadow-md ring-1 ring-rm-green/20' 
+                                                : 'bg-white text-gray-500 border-gray-200 hover:bg-white hover:border-gray-300'}
+                                            `}
                                           >
+                                            {type === 'upload' ? <Upload size={14} /> : <LinkIcon size={14} />}
                                             {type === 'upload' ? 'Upload Direto' : 'Link Externo (YouTube/Vimeo)'}
                                           </button>
                                         ))}

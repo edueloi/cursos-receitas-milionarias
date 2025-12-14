@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { generateCourseOutline } from '../services/geminiService';
 import { 
-  Sparkles, Save, Upload, Plus, X, Layout, List, Trash2, Video, 
+  Save, Upload, Plus, X, Layout, List, Trash2, Video, 
   Clock, GripVertical, ChevronDown, ChevronRight, ArrowLeft, 
   FileText, Image as ImageIcon, Link as LinkIcon, Paperclip, Eye, CheckSquare, Layers 
 } from 'lucide-react';
@@ -19,7 +18,6 @@ interface AdminCourseCreateProps {
 
 const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSave, onCancel, onShowToast }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'curriculum'>('info');
-  const [isGenerating, setIsGenerating] = useState(false);
 
   // Form State
   const [title, setTitle] = useState(initialData?.title || '');
@@ -43,19 +41,6 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
       setExpandedModules({ [modules[0].id]: true });
     }
   }, []);
-
-  // --- AI Generation ---
-  const handleGenerateAI = async () => {
-    if (!title) {
-        onShowToast('warning', 'Título Necessário', 'Digite um título para que a IA possa gerar o conteúdo.');
-        return;
-    }
-    setIsGenerating(true);
-    const result = await generateCourseOutline(title);
-    setDescription(result);
-    setIsGenerating(false);
-    onShowToast('success', 'Conteúdo Gerado!', 'A IA criou uma descrição baseada no seu título.');
-  };
 
   // --- Calculations & Save ---
   const calculateTotalDuration = () => {
@@ -274,15 +259,6 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, onSa
                       placeholder="Ex: Mestre das Vendas no Instagram..."
                       className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:ring-4 focus:ring-rm-gold/10 focus:border-rm-gold outline-none transition-all text-lg font-medium placeholder-gray-400"
                     />
-                    <button 
-                      onClick={handleGenerateAI}
-                      disabled={!title || isGenerating}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-gradient-to-r from-rm-gold to-yellow-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                      title="Gerar descrição com IA"
-                    >
-                      <Sparkles size={14} />
-                      {isGenerating ? 'Criando...' : 'Gerar com IA'}
-                    </button>
                   </div>
                 </div>
 

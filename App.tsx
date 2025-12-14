@@ -328,11 +328,7 @@ function App() {
            {/* Content */}
            <div className="relative z-20">
              <div className="flex items-center gap-3 select-none mb-8">
-               <img 
-                 src="https://receitasmilionarias.com.br/static/images/logo.png" 
-                 alt="Logo" 
-                 className="h-14 w-14 object-contain"
-               />
+               {/* Logo removed as requested */}
                <div className="flex flex-col">
                  <span className="font-serif font-bold text-white text-3xl leading-none tracking-wide">Receitas</span>
                  <span className="font-serif font-bold text-rm-gold text-3xl leading-none tracking-wide">Milionárias</span>
@@ -357,7 +353,7 @@ function App() {
            </div>
 
            <div className="relative z-20 text-xs text-white/50">
-             © 2024 Receitas Milionárias Academy. Todos os direitos reservados.
+             © 2025 Receitas Milionárias Academy. Todos os direitos reservados.
            </div>
         </div>
 
@@ -371,11 +367,7 @@ function App() {
             
             {/* Logo centered above card on Mobile */}
             <div className="lg:hidden flex flex-col items-center mb-8 animate-fade-in">
-                 <img 
-                   src="https://receitasmilionarias.com.br/static/images/logo.png" 
-                   alt="Logo" 
-                   className="h-20 w-20 object-contain mb-4 drop-shadow-lg"
-                 />
+                 {/* Logo removed as requested */}
                  <h1 className="font-serif font-bold text-3xl text-white tracking-wide">Receitas <span className="text-rm-gold">Milionárias</span></h1>
                  <p className="text-white/70 text-sm mt-1 uppercase tracking-widest font-medium">Academy</p>
             </div>
@@ -473,7 +465,7 @@ function App() {
             
             {/* Mobile Footer */}
             <div className="lg:hidden mt-8 text-center text-white/40 text-[10px] font-medium">
-               &copy; 2024 Receitas Milionárias Academy
+               &copy; 2025 Receitas Milionárias Academy
             </div>
 
           </div>

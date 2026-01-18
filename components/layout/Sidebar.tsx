@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, UserRole } from '../../types';
-import { Home, Search, BookOpen, Award, User as UserIcon, BarChart2, PlusCircle, List, ShieldCheck, ExternalLink, X, ChevronRight, HelpCircle } from 'lucide-react';
+import { Home, Search, BookOpen, Award, User as UserIcon, BarChart2, PlusCircle, List, ShieldCheck, ExternalLink, X, ChevronRight, HelpCircle, PenTool } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -27,6 +27,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
     { id: 'instructor', label: 'Dashboard Produtor', icon: BarChart2 },
     { id: 'instructor-courses', label: 'Gerenciar Cursos', icon: List },
     { id: 'create-course', label: 'Criar Novo Curso', icon: PlusCircle },
+    { id: 'signature', label: 'Assinatura', icon: PenTool },
     { id: 'affiliates', label: 'Afiliados', icon: ShieldCheck },
   ];
 

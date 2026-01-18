@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { User, UserRole, Course } from './types';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
@@ -9,6 +10,8 @@ import DashboardPage from './pages/DashboardPage';
 import CoursesPage from './pages/CoursesPage';
 import MyCoursesPage from './pages/MyCoursesPage';
 import CertificatesPage from './pages/CertificatesPage';
+import CertificateValidatePage from './pages/CertificateValidatePage';
+import SignaturePage from './pages/SignaturePage';
 import PlayerPage from './pages/PlayerPage';
 import SettingsPage from './pages/SettingsPage';
 import AffiliatesPage from './pages/AffiliatesPage';
@@ -21,8 +24,9 @@ import AdminCourseCreate from './pages/AdminCourseCreate';
 // Components
 import Button from './components/ui/Button';
 import ToastContainer, { ToastMessage } from './components/ui/Toast';
-import { ExternalLink, Globe, Eye, EyeOff, Lock, Mail, ArrowRight, CheckCircle } from 'lucide-react';
+import { ExternalLink, Eye, EyeOff, Lock, Mail, ArrowRight, CheckCircle } from 'lucide-react';
 
+/*
 // Initial Mock Data with Requested YouTube Video
 const YOUTUBE_VIDEO_URL = "https://www.youtube.com/embed/_tnDpt9jSWM";
 
@@ -114,13 +118,20 @@ const INITIAL_COURSES: Course[] = [
     modules: []
   }
 ];
+*/
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [postLoginPath, setPostLoginPath] = useState<string | null>(null);
+  const [myCourseIds, setMyCourseIds] = useState<string[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [progressMap, setProgressMap] = useState<Record<string, { completadas: string[] }>>({});
+  const [certificateMap, setCertificateMap] = useState<Record<string, { code: string; completedAt: string }>>({});
   
   // Login Form State
   const [email, setEmail] = useState('');
@@ -129,10 +140,8 @@ function App() {
   const [rememberMe, setRememberMe] = useState(false);
   
   // State for content management
-  const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null); // For playing
+  const [courses, setCourses] = useState<Course[]>([]);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null); // For editing
-  const [isCreating, setIsCreating] = useState(false); // For creating new
 
   // --- Auto Login Logic ---
   useEffect(() => {
@@ -155,6 +164,83 @@ function App() {
     };
     checkSession();
   }, []);
+
+  useEffect(() => {
+    const storedRemember = localStorage.getItem('rm_remember');
+    if (storedRemember === 'true') {
+      setRememberMe(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user && location.pathname !== '/login') {
+      setPostLoginPath(location.pathname);
+    }
+  }, [user, location.pathname]);
+
+  const refreshCourses = async () => {
+    try {
+      const data = await api.getCourses();
+      setCourses(data);
+    } catch (error) {
+      console.error("Erro ao buscar cursos:", error);
+      addToast('error', 'Erro ao buscar cursos', 'Nao foi possivel carregar os cursos.');
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      refreshCourses();
+    }
+  }, [user]);
+
+  const refreshLists = async () => {
+    if (!user?.email) return;
+    try {
+      const lists = await api.getUserLists(user.email);
+      setMyCourseIds(lists.meusCursos);
+      setFavoriteIds(lists.favoritos);
+      const progress = await api.getUserProgress(user.email);
+      setProgressMap(progress);
+      const certificates = await api.getUserCertificates(user.email);
+      setCertificateMap(certificates);
+    } catch (error) {
+      console.error('Erro ao buscar listas do usuario:', error);
+    }
+  };
+
+  useEffect(() => {
+    refreshLists();
+  }, [user]);
+
+  const pathFromTab: Record<string, string> = {
+    dashboard: '/painel',
+    courses: '/cursos',
+    'my-courses': '/meus-cursos',
+    certificates: '/certificados',
+    settings: '/perfil',
+    instructor: '/produtor',
+    'instructor-courses': '/gerenciar-cursos',
+    'create-course': '/criar-curso',
+    affiliates: '/afiliados',
+    signature: '/assinatura'
+  };
+
+  const tabFromPath = (pathname: string) => {
+    if (pathname.startsWith('/painel') || pathname === '/') return 'dashboard';
+    if (pathname.startsWith('/cursos')) return 'courses';
+    if (pathname.startsWith('/meus-cursos')) return 'my-courses';
+    if (pathname.startsWith('/certificados')) return 'certificates';
+    if (pathname.startsWith('/perfil')) return 'settings';
+    if (pathname.startsWith('/gerenciar-cursos')) return 'instructor-courses';
+    if (pathname.startsWith('/criar-curso')) return 'create-course';
+    if (pathname.startsWith('/produtor')) return 'instructor';
+    if (pathname.startsWith('/afiliados')) return 'affiliates';
+    if (pathname.startsWith('/assinatura')) return 'signature';
+    return 'dashboard';
+  };
+
+  const activeTab = tabFromPath(location.pathname);
 
   // Toast Handler
   const addToast = (type: ToastMessage['type'], title: string, message?: string) => {
@@ -181,16 +267,21 @@ function App() {
         // 2. Persist Token based on "Remember Me"
         if (rememberMe) {
           localStorage.setItem('rm_token', token);
+          sessionStorage.removeItem('rm_token');
         } else {
           sessionStorage.setItem('rm_token', token);
+          localStorage.removeItem('rm_token');
         }
+        localStorage.setItem('rm_remember', rememberMe ? 'true' : 'false');
 
         // 3. Fetch User Profile
         const userData = await api.getMe(token);
         
         setUser(userData);
         addToast('success', 'Login realizado com sucesso!', `Bem-vindo, ${userData.name.split(' ')[0]}.`);
-        setActiveTab('dashboard');
+        const nextPath = postLoginPath || '/painel';
+        setPostLoginPath(null);
+        navigate(nextPath);
       }
     } catch (error: any) {
       console.error(error);
@@ -204,22 +295,19 @@ function App() {
     localStorage.removeItem('rm_token');
     sessionStorage.removeItem('rm_token');
     setUser(null);
-    setSelectedCourse(null);
     setEditingCourse(null);
-    setIsCreating(false);
     setEmail('');
     setPassword('');
     addToast('info', 'Você saiu do sistema.', 'Até logo!');
+    navigate('/login');
   };
 
   // Navigation Logic
   const navigateTo = (tab: string) => {
-    setActiveTab(tab);
-    // Reset secondary states when changing main tabs
-    if (!['create-course'].includes(tab)) {
-       setIsCreating(false);
+    const path = pathFromTab[tab] || '/painel';
+    navigate(path);
+    if (tab !== 'create-course') {
        setEditingCourse(null);
-       setSelectedCourse(null);
     }
     // Close sidebar on mobile when navigating
     if (window.innerWidth < 1024) {
@@ -230,89 +318,165 @@ function App() {
   // Course Management Handlers
   const handleSaveCourse = (course: Course) => {
     if (editingCourse) {
-      setCourses(courses.map(c => c.id === course.id ? course : c));
       setEditingCourse(null);
       addToast('success', 'Curso Atualizado!', 'As alterações foram salvas com sucesso.');
     } else {
-      setCourses([...courses, { ...course, status: 'draft' }]); // Default new to draft
-      setIsCreating(false);
       addToast('success', 'Curso Criado!', 'Seu novo curso foi salvo como rascunho.');
     }
+    refreshCourses();
     // Return to appropriate list based on role
-    setActiveTab(user?.role === UserRole.ADMIN ? 'instructor-courses' : 'courses');
+    navigate(user?.role === UserRole.ADMIN ? '/gerenciar-cursos' : '/cursos');
   };
 
   const handleCreateNew = () => {
     setEditingCourse(null);
-    setIsCreating(true);
-    setActiveTab('create-course');
+    navigate('/criar-curso');
   };
 
   const handleEdit = (course: Course) => {
     setEditingCourse(course);
-    setIsCreating(false);
-    setActiveTab('create-course');
+    navigate('/criar-curso');
   };
 
-  // RENDER LOGIC
-  const renderContent = () => {
-    // 0. Player Mode (Priority: If a course is selected, show player)
-    if (selectedCourse) {
+  const handleDeleteCourse = async (course: Course) => {
+    try {
+      await api.deleteCourse(course.id);
+      addToast('success', 'Curso excluido!', 'O curso foi removido com sucesso.');
+      refreshCourses();
+      refreshLists();
+    } catch (error: any) {
+      addToast('error', 'Falha ao excluir', error.message || 'Erro ao excluir curso.');
+    }
+  };
+
+  const handleMarkLessonComplete = async (courseId: string, lessonId: string) => {
+    if (!user?.email) return;
+    try {
+      const progress = await api.updateProgress(user.email, courseId, lessonId, true);
+      setProgressMap(progress);
+      const course = courses.find(c => c.id === courseId);
+      if (course) {
+        let total = 0;
+        course.modules.forEach(m => (total += m.lessons.length));
+        const completed = progress[courseId]?.completadas?.length || 0;
+        if (total > 0 && completed >= total && !certificateMap[courseId]) {
+          const now = new Date().toISOString();
+          const certs = await api.setUserCertificate(user.email, courseId, now);
+          setCertificateMap(certs);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar progresso:', error);
+    }
+  };
+
+  const applyProgress = (list: Course[]) => {
+    return list.map(course => {
+      const completed = new Set(progressMap[course.id]?.completadas || []);
+      let totalLessons = 0;
+      let completedLessons = 0;
+      const modules = course.modules.map(mod => ({
+        ...mod,
+        lessons: mod.lessons.map(lesson => {
+          totalLessons += 1;
+          const isCompleted = completed.has(lesson.id);
+          if (isCompleted) completedLessons += 1;
+          return { ...lesson, completed: isCompleted };
+        })
+      }));
+      const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+      return { ...course, modules, progress };
+    });
+  };
+
+  const coursesWithProgress = applyProgress(courses);
+
+  useEffect(() => {
+    const ensureCertificates = async () => {
+      if (!user?.email) return;
+      for (const course of courses) {
+        let total = 0;
+        course.modules.forEach(m => (total += m.lessons.length));
+        const completed = progressMap[course.id]?.completadas?.length || 0;
+        if (total > 0 && completed >= total && !certificateMap[course.id]) {
+          try {
+            const now = new Date().toISOString();
+            const certs = await api.setUserCertificate(user.email, course.id, now);
+            setCertificateMap(certs);
+          } catch (error) {
+            console.error('Erro ao gerar certificado:', error);
+          }
+        }
+      }
+    };
+    ensureCertificates();
+  }, [user, courses, progressMap, certificateMap]);
+
+  const handleAddToMyCourses = async (course: Course) => {
+    if (!user?.email) return;
+    if (myCourseIds.includes(course.id)) {
+      addToast('info', 'Ja esta nos seus cursos', course.title);
+      return;
+    }
+    try {
+      const updated = await api.updateMyCourses(user.email, course.id, 'add');
+      setMyCourseIds(updated);
+      addToast('success', 'Adicionado!', 'Curso adicionado aos seus cursos.');
+    } catch (error: any) {
+      addToast('error', 'Falha ao adicionar', error.message || 'Erro ao atualizar seus cursos.');
+    }
+  };
+
+  const handleToggleFavorite = async (course: Course) => {
+    if (!user?.email) return;
+    const isFav = favoriteIds.includes(course.id);
+    try {
+      const updated = await api.updateFavorites(user.email, course.id, isFav ? 'remove' : 'add');
+      setFavoriteIds(updated);
+      addToast('success', isFav ? 'Removido dos favoritos' : 'Favoritado!', course.title);
+    } catch (error: any) {
+      addToast('error', 'Falha ao favoritar', error.message || 'Erro ao atualizar favoritos.');
+    }
+  };
+
+  const handleSelectCourse = (course: Course) => {
+    navigate(`/curso/${course.id}`);
+  };
+
+  const PlayerRoute = () => {
+    const courseId = location.pathname.split('/')[2] || '';
+    if (coursesWithProgress.length === 0) {
       return (
-        <PlayerPage 
-          course={selectedCourse} 
-          onBack={() => setSelectedCourse(null)} 
-        />
+        <div className="min-h-screen bg-gray-900 font-sans">
+          <ToastContainer toasts={toasts} removeToast={removeToast} />
+          <div className="p-10 text-center text-white">Carregando curso...</div>
+        </div>
       );
     }
-
-    // 1. Creator/Edit Mode
-    if (activeTab === 'create-course' || isCreating || editingCourse) {
-       return (
-         <AdminCourseCreate 
-           initialData={editingCourse}
-           currentUser={user} // Pass current user here
-           onSave={handleSaveCourse}
-           onCancel={() => {
-             setIsCreating(false);
-             setEditingCourse(null);
-             setActiveTab('instructor-courses');
-           }}
-           onShowToast={addToast}
-         />
-       );
+    const course = coursesWithProgress.find(c => c.id === courseId);
+    if (!course) {
+      return (
+        <div className="min-h-screen bg-gray-900 font-sans">
+          <ToastContainer toasts={toasts} removeToast={removeToast} />
+          <div className="p-10 text-center text-white">Curso nao encontrado.</div>
+        </div>
+      );
     }
-
-    // 2. Tab Routing
-    switch (activeTab) {
-      // Global / Student Routes
-      case 'dashboard':
-        return <DashboardPage user={user!} />;
-      case 'courses':
-        return <CoursesPage courses={courses} onSelectCourse={setSelectedCourse} user={user} />;
-      case 'my-courses':
-        return <MyCoursesPage courses={courses} onSelectCourse={setSelectedCourse} />;
-      case 'certificates':
-        return <CertificatesPage />;
-      case 'settings':
-        return <SettingsPage user={user!} />;
-      
-      // Instructor Routes
-      case 'instructor':
-        return <InstructorDashboardPage />;
-      case 'instructor-courses':
-        return <InstructorCoursesPage courses={courses} onCreateCourse={handleCreateNew} onEditCourse={handleEdit} />;
-      case 'affiliates':
-        return <AffiliatesPage />;
-        
-      default:
-        return <div className="p-10 text-center">Página não encontrada.</div>;
-    }
+    return (
+      <div className="min-h-screen bg-gray-900 font-sans">
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+        <PlayerPage
+          course={course}
+          user={user}
+          onBack={() => navigate('/cursos')}
+          onMarkLessonComplete={handleMarkLessonComplete}
+        />
+      </div>
+    );
   };
 
   // 1. Login Screen (New Premium Design - Mobile First)
-  if (!user) {
-    return (
+  const loginScreen = (
       <div className="min-h-screen w-full flex font-sans overflow-hidden">
         <ToastContainer toasts={toasts} removeToast={removeToast} />
         
@@ -431,7 +595,11 @@ function App() {
                         type="checkbox" 
                         className="w-4 h-4 rounded text-rm-green focus:ring-rm-gold border-gray-300 cursor-pointer" 
                         checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setRememberMe(checked);
+                          localStorage.setItem('rm_remember', checked ? 'true' : 'false');
+                        }}
                       />
                       <span>Lembrar-me</span>
                     </label>
@@ -473,20 +641,28 @@ function App() {
         </div>
       </div>
     );
-  }
 
-  // 3. Layout Handling
-  // If in Player Mode (Course Selected), render full screen without global navigation
-  if (selectedCourse) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 font-sans">
-        <ToastContainer toasts={toasts} removeToast={removeToast} />
-        {renderContent()}
+      <div className="min-h-screen flex items-center justify-center bg-[#1C3B32]">
+        <span className="text-white text-xl font-bold animate-pulse">Carregando...</span>
       </div>
     );
   }
 
-  // Standard Dashboard Layout
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/login" element={loginScreen} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
+  if (location.pathname.startsWith('/curso/')) {
+    return <PlayerRoute />;
+  }
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col w-full overflow-x-hidden">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
@@ -508,10 +684,46 @@ function App() {
 
       {/* Main Content - Full Width */}
       <main className="flex-1 transition-all duration-300 mt-16 w-full max-w-full">
-        {renderContent()}
+        <Routes>
+          <Route path="/" element={<Navigate to="/painel" replace />} />
+          <Route path="/login" element={<Navigate to="/painel" replace />} />
+          <Route path="/dashboard" element={<Navigate to="/painel" replace />} />
+          <Route path="/courses" element={<Navigate to="/cursos" replace />} />
+          <Route path="/my-courses" element={<Navigate to="/meus-cursos" replace />} />
+          <Route path="/certificates" element={<Navigate to="/certificados" replace />} />
+          <Route path="/settings" element={<Navigate to="/perfil" replace />} />
+          <Route path="/instructor" element={<Navigate to="/produtor" replace />} />
+          <Route path="/instructor-courses" element={<Navigate to="/gerenciar-cursos" replace />} />
+          <Route path="/create-course" element={<Navigate to="/criar-curso" replace />} />
+          <Route path="/affiliates" element={<Navigate to="/afiliados" replace />} />
+          <Route path="/painel" element={<DashboardPage user={user!} />} />
+          <Route path="/cursos" element={<CoursesPage courses={coursesWithProgress} onSelectCourse={handleSelectCourse} user={user} myCourseIds={myCourseIds} onAddToMyCourses={handleAddToMyCourses} />} />
+          <Route path="/meus-cursos" element={<MyCoursesPage courses={coursesWithProgress} onSelectCourse={handleSelectCourse} user={user} myCourseIds={myCourseIds} favoriteIds={favoriteIds} onToggleFavorite={handleToggleFavorite} />} />
+          <Route path="/certificados" element={<CertificatesPage courses={coursesWithProgress} user={user} certificateMap={certificateMap} />} />
+          <Route path="/certificados/validar/:code" element={<CertificateValidatePage courses={coursesWithProgress} />} />
+          <Route path="/perfil" element={<SettingsPage user={user!} />} />
+          <Route path="/produtor" element={<InstructorDashboardPage />} />
+          <Route path="/gerenciar-cursos" element={<InstructorCoursesPage courses={coursesWithProgress} currentUser={user} onCreateCourse={handleCreateNew} onEditCourse={handleEdit} onDeleteCourse={handleDeleteCourse} />} />
+          <Route path="/criar-curso" element={
+            <AdminCourseCreate 
+              initialData={editingCourse}
+              currentUser={user}
+              onSave={handleSaveCourse}
+              onCancel={() => {
+                setEditingCourse(null);
+                navigate('/gerenciar-cursos');
+              }}
+              onShowToast={addToast}
+            />
+          } />
+          <Route path="/assinatura" element={<SignaturePage user={user} onShowToast={addToast} />} />
+          <Route path="/afiliados" element={<AffiliatesPage />} />
+          <Route path="*" element={<div className="p-10 text-center">Pagina nao encontrada.</div>} />
+        </Routes>
       </main>
     </div>
   );
 }
 
 export default App;
+

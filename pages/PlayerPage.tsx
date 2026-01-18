@@ -1,17 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Course, Lesson } from '../types';
+import { Course, Lesson, User } from '../types';
 import { ChevronLeft, Play, CheckCircle, Lock, ChevronDown, ChevronUp, Menu, X, FileText, MessageCircle, BookOpen } from 'lucide-react';
 import Button from '../components/ui/Button';
+import { api } from '../services/api';
 
 interface PlayerPageProps {
   course: Course;
   onBack: () => void;
+  user?: User | null;
+  onMarkLessonComplete?: (courseId: string, lessonId: string) => void;
 }
 
-const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
-  const [activeModuleId, setActiveModuleId] = useState<string>(course.modules[0]?.id);
-  const [activeLesson, setActiveLesson] = useState<Lesson>(course.modules[0]?.lessons[0]);
+const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack, user, onMarkLessonComplete }) => {
+  const [activeModuleId, setActiveModuleId] = useState<string>(course.modules[0]?.id || '');
+  const [activeLesson, setActiveLesson] = useState<Lesson | null>(course.modules[0]?.lessons[0] || null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [hasMarkedHalf, setHasMarkedHalf] = useState(false);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [questionText, setQuestionText] = useState('');
+  const [replyMap, setReplyMap] = useState<Record<string, string>>({});
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
   
   // Default closed on mobile, open on desktop
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -25,7 +35,77 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
   // Reset playing state when lesson changes
   useEffect(() => {
     setIsPlaying(false);
+    setVideoError(null);
+    setHasMarkedHalf(!!activeLesson?.completed);
   }, [activeLesson]);
+
+  useEffect(() => {
+    const firstModule = course.modules[0];
+    const firstLesson = firstModule?.lessons?.[0] || null;
+    setActiveModuleId(firstModule?.id || '');
+    setActiveLesson(firstLesson);
+  }, [course]);
+
+  useEffect(() => {
+    const loadQuestions = async () => {
+      try {
+        const data = await api.getQuestions(course.id);
+        setQuestions(data);
+      } catch (error) {
+        console.error('Erro ao carregar perguntas:', error);
+      }
+    };
+    loadQuestions();
+  }, [course.id]);
+
+  const isOwner = !!user?.email && user.email === course.creatorEmail;
+
+  const handleSendQuestion = async () => {
+    if (!user?.email || !questionText.trim()) return;
+    try {
+      const created = await api.addQuestion(course.id, user.email, user.name, questionText.trim());
+      setQuestions(prev => [...prev, created]);
+      setQuestionText('');
+    } catch (error) {
+      console.error('Erro ao criar pergunta:', error);
+    }
+  };
+
+  const handleSendAnswer = async (questionId: string) => {
+    if (!user?.email || !isOwner) return;
+    const text = replyMap[questionId]?.trim();
+    if (!text) return;
+    try {
+      const resposta = await api.addAnswer(course.id, questionId, user.email, user.name, text);
+      setQuestions(prev =>
+        prev.map(q => q.id === questionId ? { ...q, respostas: [...(q.respostas || []), resposta] } : q)
+      );
+      setReplyMap(prev => ({ ...prev, [questionId]: '' }));
+    } catch (error) {
+      console.error('Erro ao responder:', error);
+    }
+  };
+
+  const handleDeleteQuestion = async (questionId: string) => {
+    try {
+      await api.deleteQuestion(course.id, questionId);
+      setQuestions(prev => prev.filter(q => q.id !== questionId));
+    } catch (error) {
+      console.error('Erro ao excluir pergunta:', error);
+    }
+  };
+
+  const handleEditQuestion = async (questionId: string) => {
+    if (!editText.trim()) return;
+    try {
+      const updated = await api.updateQuestion(course.id, questionId, editText.trim());
+      setQuestions(prev => prev.map(q => q.id === questionId ? updated : q));
+      setEditId(null);
+      setEditText('');
+    } catch (error) {
+      console.error('Erro ao editar pergunta:', error);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<'overview' | 'materials' | 'comments'>('overview');
 
@@ -47,7 +127,7 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
           </button>
           <div className="border-l border-gray-700 pl-3 md:pl-4 overflow-hidden">
             <h1 className="text-sm md:text-base font-semibold truncate text-gray-100">{course.title}</h1>
-            <p className="text-[10px] text-gray-400 truncate md:hidden">Aula Atual: {activeLesson.title}</p>
+            <p className="text-[10px] text-gray-400 truncate md:hidden">Aula Atual: {activeLesson?.title || 'Sem aulas'}</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -82,14 +162,42 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
              <div className="aspect-video w-full max-h-[75vh] mx-auto bg-black flex items-center justify-center relative">
                 
                 {/* Video Logic */}
-                {isPlaying && activeLesson.videoType === 'embed' && activeLesson.videoUrl ? (
-                  <iframe 
-                    src={`${activeLesson.videoUrl}?autoplay=1&modestbranding=1&rel=0`} 
-                    title={activeLesson.title}
-                    className="w-full h-full absolute inset-0 border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                  />
+                {isPlaying && activeLesson && activeLesson.videoUrl ? (
+                  activeLesson.videoType === 'embed' ? (
+                    <iframe 
+                      src={`${activeLesson.videoUrl}?autoplay=1&modestbranding=1&rel=0`} 
+                      title={activeLesson.title}
+                      className="w-full h-full absolute inset-0 border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video
+                      src={activeLesson.videoUrl}
+                      className="w-full h-full absolute inset-0"
+                      controls
+                      autoPlay
+                      preload="metadata"
+                      controlsList="nodownload noplaybackrate noremoteplayback"
+                      disablePictureInPicture
+                      onContextMenu={(e) => e.preventDefault()}
+                      onTimeUpdate={(e) => {
+                        if (hasMarkedHalf || !activeLesson?.id || activeLesson.completed) return;
+                        const target = e.currentTarget;
+                        if (!target.duration || !isFinite(target.duration)) return;
+                        if (target.currentTime >= target.duration * 0.5) {
+                          setHasMarkedHalf(true);
+                          onMarkLessonComplete?.(course.id, activeLesson.id);
+                        }
+                      }}
+                      onEnded={() => {
+                        if (!activeLesson?.id || activeLesson.completed) return;
+                        setHasMarkedHalf(true);
+                        onMarkLessonComplete?.(course.id, activeLesson.id);
+                      }}
+                      onError={() => setVideoError('Nao foi possivel carregar o video.')}
+                    />
+                  )
                 ) : (
                   /* Placeholder / Start Screen */
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -106,6 +214,11 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
                         <Play fill="currentColor" className="ml-1 w-8 h-8 md:w-12 md:h-12" />
                       </button>
                    </div>
+                )}
+                {videoError && (
+                  <div className="absolute inset-x-0 bottom-4 text-center text-sm text-white bg-black/60 px-4 py-2">
+                    {videoError}
+                  </div>
                 )}
 
              </div>
@@ -142,10 +255,18 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
                   <div className="space-y-6">
                     <div>
                       <span className="text-xs font-bold text-rm-gold uppercase tracking-wider mb-2 block">Aula Atual</span>
-                      <h3 className="text-xl md:text-2xl font-serif font-bold text-rm-green mb-4 leading-tight">{activeLesson.title}</h3>
-                      <p className="text-sm md:text-base text-gray-600 leading-relaxed">
-                        {activeLesson.description || 'Nesta aula, vamos abordar os principais conceitos necessários para você escalar suas vendas. Prepare seu caderno de anotações e preste atenção aos detalhes práticos demonstrados.'}
-                      </p>
+                    <h3 className="text-xl md:text-2xl font-serif font-bold text-rm-green mb-4 leading-tight">{activeLesson?.title || 'Aula nao cadastrada'}</h3>
+                    <p className="text-sm md:text-base text-gray-600 leading-relaxed">
+                        {activeLesson?.description || 'Nesta aula, vamos abordar os principais conceitos necessarios para voce escalar suas vendas. Prepare seu caderno de anotacoes e preste atencao aos detalhes praticos demonstrados.'}
+                    </p>
+                    {activeLesson?.id && (
+                      <button
+                        onClick={() => onMarkLessonComplete?.(course.id, activeLesson.id)}
+                        className="mt-4 px-4 py-2 rounded-lg text-sm font-bold text-white bg-rm-green hover:bg-[#0f241e]"
+                      >
+                        Marcar como concluida
+                      </button>
+                    )}
                     </div>
                     
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
@@ -161,7 +282,7 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
 
                 {activeTab === 'materials' && (
                   <div className="space-y-4">
-                    {activeLesson.attachments && activeLesson.attachments.length > 0 ? (
+                    {activeLesson?.attachments && activeLesson.attachments.length > 0 ? (
                         activeLesson.attachments.map(att => (
                             <div key={att.id} className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-rm-gold transition-colors cursor-pointer group">
                                 <div className="p-3 bg-red-50 text-red-500 rounded-lg group-hover:bg-red-100 transition-colors">
@@ -171,7 +292,9 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
                                     <h4 className="font-bold text-gray-800 text-sm group-hover:text-rm-green">{att.name}</h4>
                                     <p className="text-xs text-gray-400">{att.size} • {att.type.toUpperCase()}</p>
                                 </div>
-                                <Button variant="outline" className="text-xs px-3 py-1.5 h-auto">Baixar</Button>
+                                <a href={att.url} className="text-xs px-3 py-1.5 h-auto border border-gray-300 rounded-md text-gray-700 hover:border-rm-gold hover:text-rm-green" download>
+                                  Baixar
+                                </a>
                             </div>
                         ))
                     ) : (
@@ -186,22 +309,85 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
                 {activeTab === 'comments' && (
                    <div className="space-y-6">
                       <div className="flex gap-4">
-                         <div className="h-10 w-10 bg-rm-green text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">EU</div>
+                         <div className="h-10 w-10 bg-rm-green text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                           {user?.name?.charAt(0) || 'U'}
+                         </div>
                          <div className="flex-1">
                             <textarea 
                               className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-rm-gold outline-none transition-shadow"
-                              placeholder="Tem alguma dúvida? Pergunte aqui..."
+                              placeholder="Tem alguma duvida? Pergunte aqui..."
                               rows={3}
+                              value={questionText}
+                              onChange={(e) => setQuestionText(e.target.value)}
                             />
                             <div className="mt-2 flex justify-end">
-                               <Button size="sm">Enviar Pergunta</Button>
+                               <Button size="sm" onClick={handleSendQuestion}>Enviar Pergunta</Button>
                             </div>
                          </div>
                       </div>
-                      
-                      <div className="text-center pt-8">
-                          <p className="text-sm text-gray-400">Nenhuma dúvida publicada ainda.</p>
-                      </div>
+
+                      {questions.length === 0 && (
+                        <div className="text-center pt-8">
+                            <p className="text-sm text-gray-400">Nenhuma duvida publicada ainda.</p>
+                        </div>
+                      )}
+
+                      {questions.map(q => {
+                        const canDelete = isOwner || (user?.email && q.autorEmail === user.email);
+                        const canEdit = user?.email && q.autorEmail === user.email;
+                        return (
+                          <div key={q.id} className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-bold text-gray-800">{q.autorNome}</p>
+                                {editId === q.id ? (
+                                  <textarea
+                                    className="w-full border border-gray-300 rounded-lg p-2 text-sm mt-2"
+                                    rows={2}
+                                    value={editText}
+                                    onChange={(e) => setEditText(e.target.value)}
+                                  />
+                                ) : (
+                                  <p className="text-sm text-gray-600 mt-1">{q.texto}</p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {canEdit && editId !== q.id && (
+                                  <button className="text-xs text-gray-500 hover:text-rm-green" onClick={() => { setEditId(q.id); setEditText(q.texto); }}>Editar</button>
+                                )}
+                                {canEdit && editId === q.id && (
+                                  <button className="text-xs text-rm-green" onClick={() => handleEditQuestion(q.id)}>Salvar</button>
+                                )}
+                                {canDelete && (
+                                  <button className="text-xs text-red-500" onClick={() => handleDeleteQuestion(q.id)}>Excluir</button>
+                                )}
+                              </div>
+                            </div>
+
+                            {(q.respostas || []).length > 0 && (
+                              <div className="space-y-2 pl-4 border-l border-gray-200">
+                                {q.respostas.map((r: any) => (
+                                  <div key={r.id} className="text-sm text-gray-700">
+                                    <span className="font-bold">{r.autorNome}:</span> {r.texto}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {isOwner && (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  className="flex-1 border border-gray-300 rounded-lg p-2 text-sm"
+                                  placeholder="Responder como instrutor..."
+                                  value={replyMap[q.id] || ''}
+                                  onChange={(e) => setReplyMap(prev => ({ ...prev, [q.id]: e.target.value }))}
+                                />
+                                <Button size="sm" onClick={() => handleSendAnswer(q.id)}>Responder</Button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                    </div>
                 )}
              </div>
@@ -261,7 +447,7 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
                                }}
                                className={`
                                   w-full flex items-start gap-3 px-4 py-3.5 text-left transition-all border-l-4
-                                  ${activeLesson.id === lesson.id 
+                                  ${activeLesson?.id === lesson.id 
                                     ? 'bg-blue-50/60 border-rm-green' 
                                     : 'border-transparent hover:bg-gray-100'}
                                `}
@@ -269,11 +455,11 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack }) => {
                                <div className="mt-0.5 flex-shrink-0">
                                   {lesson.completed 
                                     ? <div className="bg-rm-gold text-white rounded-full p-0.5"><CheckCircle size={14} /></div>
-                                    : <div className={`h-4 w-4 rounded-full border-2 transition-colors ${activeLesson.id === lesson.id ? 'border-rm-green bg-rm-green' : 'border-gray-300'}`}></div>
+                                    : <div className={`h-4 w-4 rounded-full border-2 transition-colors ${activeLesson?.id === lesson.id ? 'border-rm-green bg-rm-green' : 'border-gray-300'}`}></div>
                                   }
                                </div>
                                <div className="flex-1 min-w-0">
-                                  <p className={`text-sm truncate ${activeLesson.id === lesson.id ? 'font-bold text-rm-green' : 'text-gray-600'}`}>
+                                  <p className={`text-sm truncate ${activeLesson?.id === lesson.id ? 'font-bold text-rm-green' : 'text-gray-600'}`}>
                                      {lesson.title}
                                   </p>
                                   <div className="flex items-center gap-2 mt-1">

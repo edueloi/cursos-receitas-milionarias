@@ -1,21 +1,32 @@
 import React, { useState } from 'react';
-import { Course } from '../types';
+import { Course, User } from '../types';
 import { Play, Star, Clock, Trophy } from 'lucide-react';
 import Button from '../components/ui/Button';
 
 interface MyCoursesPageProps {
   courses: Course[];
   onSelectCourse: (course: Course) => void;
+  user?: User | null;
+  myCourseIds?: string[];
+  favoriteIds?: string[];
+  onToggleFavorite?: (course: Course) => void;
 }
 
-const MyCoursesPage: React.FC<MyCoursesPageProps> = ({ courses, onSelectCourse }) => {
+const MyCoursesPage: React.FC<MyCoursesPageProps> = ({ courses, onSelectCourse, user, myCourseIds = [], favoriteIds = [], onToggleFavorite }) => {
   const [activeTab, setActiveTab] = useState<'in-progress' | 'completed' | 'favorites'>('in-progress');
 
-  // Filter logic (Mocked based on progress)
-  const myCourses = courses.filter(c => {
-    if (activeTab === 'in-progress') return (c.progress || 0) > 0 && (c.progress || 0) < 100;
-    if (activeTab === 'completed') return (c.progress || 0) === 100;
-    return (c.progress || 0) > 0; // Favorites mock (show all started for now)
+  const baseCourses = courses.filter(c =>
+    c.status === 'published' || (c.status === 'draft' && user && user.email === c.creatorEmail)
+  );
+  const visibleCourses = baseCourses.filter(c =>
+    myCourseIds.includes(c.id) || (user && user.email === c.creatorEmail)
+  );
+
+  const myCourses = visibleCourses.filter(c => {
+    const progress = typeof c.progress === 'number' ? c.progress : 0;
+    if (activeTab === 'in-progress') return progress < 100;
+    if (activeTab === 'completed') return progress === 100;
+    return favoriteIds.includes(c.id);
   });
 
   return (
@@ -111,13 +122,29 @@ const MyCoursesPage: React.FC<MyCoursesPageProps> = ({ courses, onSelectCourse }
                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                    {course.totalDuration} de conteúdo
                  </span>
-                 <button 
-                   onClick={() => onSelectCourse(course)}
-                   className="text-sm font-bold text-rm-green hover:text-rm-gold transition-colors flex items-center gap-1 group/btn"
-                 >
-                   {course.progress === 100 ? 'Rever Curso' : 'Continuar'} 
-                   <span className="transform transition-transform group-hover/btn:translate-x-1">→</span>
-                 </button>
+                 <div className="flex items-center gap-3">
+                   {onToggleFavorite && (
+                     <button
+                       onClick={() => onToggleFavorite(course)}
+                       className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
+                         favoriteIds.includes(course.id)
+                           ? 'text-rm-gold border-rm-gold/40 bg-rm-gold/10'
+                           : 'text-gray-500 border-gray-200 hover:text-rm-gold hover:border-rm-gold/40'
+                       }`}
+                       title={favoriteIds.includes(course.id) ? 'Remover dos favoritos' : 'Favoritar'}
+                     >
+                       <Star size={18} fill={favoriteIds.includes(course.id) ? 'currentColor' : 'none'} />
+                       {favoriteIds.includes(course.id) ? 'Favorito' : 'Favoritar'}
+                     </button>
+                   )}
+                   <button 
+                     onClick={() => onSelectCourse(course)}
+                     className="text-sm font-bold text-rm-green hover:text-rm-gold transition-colors flex items-center gap-1 group/btn"
+                   >
+                     {course.progress === 100 ? 'Rever Curso' : 'Continuar'} 
+                     <span className="transform transition-transform group-hover/btn:translate-x-1">→</span>
+                   </button>
+                 </div>
                </div>
             </div>
           </div>

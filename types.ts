@@ -61,4 +61,5 @@ export interface Course {
   status: 'draft' | 'published' | 'archived';
   price?: number;
   creatorEmail?: string; // New field for visibility logic
+  creatorName?: string;
 }

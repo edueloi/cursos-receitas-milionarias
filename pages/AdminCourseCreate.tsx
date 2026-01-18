@@ -26,10 +26,11 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [thumbnailUrl, setThumbnailUrl] = useState(initialData?.thumbnailUrl || '');
-  const [category, setCategory] = useState(initialData?.category || 'Vendas');
+  const [category, setCategory] = useState(initialData?.category || '');
   const [level, setLevel] = useState<Course['level']>(initialData?.level || 'Iniciante');
-  const [price, setPrice] = useState(initialData?.price?.toString() || '');
   const [status, setStatus] = useState<Course['status']>(initialData?.status || 'draft');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState('');
   
   const [modules, setModules] = useState<Module[]>(initialData?.modules || [
     { id: Date.now().toString(), title: 'Módulo 01: Introdução', lessons: [] }
@@ -54,6 +55,47 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
     }
   }, []);
 
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const list = await api.getCategories();
+        setCategories(list);
+        if (!category && list.length > 0) {
+          setCategory(list[0]);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  const handleAddCategory = async () => {
+    const name = newCategory.trim();
+    if (!name) return;
+    try {
+      const list = await api.addCategory(name);
+      setCategories(list);
+      setCategory(name);
+      setNewCategory('');
+      onShowToast('success', 'Categoria criada', 'Nova categoria adicionada.');
+    } catch (error: any) {
+      onShowToast('error', 'Erro ao criar categoria', error.message || 'Falha ao criar categoria.');
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    if (!seconds || !isFinite(seconds)) return '00:00';
+    const total = Math.floor(seconds);
+    const hrs = Math.floor(total / 3600);
+    const mins = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+    if (hrs > 0) {
+      return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
   // --- File Selection Logic (Local Preview) ---
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video' | 'document') => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -75,6 +117,16 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
             videoUrl: previewUrl, 
             videoType: 'upload' 
         });
+        const tempVideo = document.createElement('video');
+        tempVideo.preload = 'metadata';
+        tempVideo.src = previewUrl;
+        tempVideo.onloadedmetadata = () => {
+          const duration = formatDuration(tempVideo.duration);
+          updateLesson(moduleId, lessonId, { duration });
+        };
+        tempVideo.onerror = () => {
+          console.warn('Nao foi possivel ler a duracao do video.');
+        };
         onShowToast('info', 'Vídeo selecionado', 'O arquivo será enviado ao salvar.');
     } 
     else if (type === 'document' && activeUploadContext.current) {
@@ -167,7 +219,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
       status: status, // Use the selected status (draft/published)
       category,
       level,
-      price: parseFloat(price) || 0
+      price: 0
     };
 
     try {
@@ -279,10 +331,26 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
                      <div>
                         <label className="block text-sm font-bold mb-1">Categoria</label>
                         <select className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white" value={category} onChange={e => setCategory(e.target.value)}>
-                           <option value="Vendas">Vendas</option>
-                           <option value="Gastronomia">Gastronomia</option>
-                           <option value="Marketing">Marketing</option>
+                           {categories.length === 0 && <option value="">Selecione...</option>}
+                           {categories.map(cat => (
+                             <option key={cat} value={cat}>{cat}</option>
+                           ))}
                         </select>
+                        <div className="mt-3 flex gap-2">
+                          <input
+                            className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm"
+                            placeholder="Nova categoria"
+                            value={newCategory}
+                            onChange={(e) => setNewCategory(e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddCategory}
+                            className="px-3 py-2 rounded-lg text-xs font-bold bg-rm-green text-white hover:bg-[#0f241e]"
+                          >
+                            Criar
+                          </button>
+                        </div>
                      </div>
                      <div>
                         <label className="block text-sm font-bold mb-1">Nível</label>
@@ -303,7 +371,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
                   </div>
                </div>
                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                   <Input label="Preço (R$)" type="number" value={price} onChange={e => setPrice(e.target.value)} />
+                   <p className="text-sm text-gray-500">Curso incluso na assinatura.</p>
                </div>
             </div>
           </div>

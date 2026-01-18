@@ -1,7 +1,10 @@
 import { User, UserRole, Course, Module, Lesson, Attachment } from '../types';
 
-const API_URL = 'https://api.receitasmilionarias.com.br';
-const COURSE_API_URL = 'https://cursos-api.receitasmilionarias.com.br';
+const API_URL =
+  import.meta.env.VITE_API_URL || 'https://api.receitasmilionarias.com.br';
+const COURSE_API_URL =
+  import.meta.env.VITE_COURSE_API_URL ||
+  'https://cursos-api.receitasmilionarias.com.br';
 
 // Helper to calculate duration from modules
 const calculateTotalDuration = (modules: any[]): string => {
@@ -81,15 +84,16 @@ export const api = {
       
       // Map Backend (Portuguese) to Frontend (Typescript Interface)
       return (data.cursos || []).map((c: any) => ({
-        id: c.id,
+        id: String(c.id),
         title: c.titulo,
         description: c.descricao,
-        thumbnailUrl: c.imagemCapa ? `${COURSE_API_URL}/videos/${c.imagemCapa}` : '',
+        thumbnailUrl: c.imagemCapa ? `${COURSE_API_URL}/videos/${encodeURIComponent(c.imagemCapa)}` : '',
         category: c.categoria,
         level: c.nivel,
         price: c.preco,
         status: c.rascunho ? 'draft' : 'published',
         creatorEmail: c.email, // Important for draft visibility
+        creatorName: c.instrutorNome || '',
         totalDuration: calculateTotalDuration(c.modulos || []), // Calculate automatically
         progress: 0, 
         modules: (c.modulos || []).map((m: any, mIdx: number) => ({
@@ -100,12 +104,12 @@ export const api = {
              title: l.tituloAula,
              duration: l.duracao,
              videoType: l.video?.filename ? 'upload' : 'embed',
-             videoUrl: l.video?.filename ? `${COURSE_API_URL}/videos/${l.video.filename}` : (l.video?.url || ''),
+             videoUrl: l.video?.filename ? `${COURSE_API_URL}/videos/${encodeURIComponent(l.video.filename)}` : (l.video?.url || ''),
              isFreePreview: l.gratuita,
              attachments: (l.materiais || []).map((mat: any, matIdx: number) => ({
                 id: `att-${matIdx}`,
                 name: mat.originalname || mat.filename,
-                url: `${COURSE_API_URL}/materiais/${mat.filename}`,
+                url: `${COURSE_API_URL}/materiais/${encodeURIComponent(mat.filename)}`,
                 type: 'pdf',
                 size: 'Unknown'
              }))
@@ -125,6 +129,7 @@ export const api = {
     // 1. Basic Fields
     if (course.id) formData.append('id', course.id); // Send ID if editing
     formData.append('email', user.email);
+    formData.append('instrutorNome', user.name);
     formData.append('titulo', course.title);
     formData.append('descricao', course.description);
     formData.append('categoria', course.category || 'Geral');
@@ -200,7 +205,231 @@ export const api = {
   },
 
   deleteCourse: async (id: string): Promise<void> => {
-     await fetch(`${COURSE_API_URL}/cursos/${id}`, { method: 'DELETE' });
+     const response = await fetch(`${COURSE_API_URL}/cursos/${id}`, { method: 'DELETE' });
+     if (!response.ok) {
+       const data = await response.json().catch(() => ({}));
+       throw new Error(data.error || 'Erro ao excluir curso');
+     }
+  },
+
+  // User lists (meus cursos / favoritos)
+  getUserLists: async (email: string): Promise<{ meusCursos: string[]; favoritos: string[] }> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/listas`);
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao buscar listas do usuario');
+    }
+    const data = await response.json();
+    return {
+      meusCursos: (data.meusCursos || []).map((id: any) => String(id)),
+      favoritos: (data.favoritos || []).map((id: any) => String(id))
+    };
+  },
+
+  updateMyCourses: async (email: string, courseId: string, action: 'add' | 'remove' = 'add'): Promise<string[]> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/meus-cursos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId, action })
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao atualizar meus cursos');
+    }
+    const data = await response.json();
+    return (data.meusCursos || []).map((id: any) => String(id));
+  },
+
+  updateFavorites: async (email: string, courseId: string, action: 'add' | 'remove' = 'add'): Promise<string[]> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/favoritos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId, action })
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao atualizar favoritos');
+    }
+    const data = await response.json();
+    return (data.favoritos || []).map((id: any) => String(id));
+  },
+
+  // Categories
+  getCategories: async (): Promise<string[]> => {
+    const response = await fetch(`${COURSE_API_URL}/categorias`);
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao buscar categorias');
+    }
+    const data = await response.json();
+    return (data.categorias || []).map((c: any) => String(c));
+  },
+
+  addCategory: async (name: string): Promise<string[]> => {
+    const response = await fetch(`${COURSE_API_URL}/categorias`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao criar categoria');
+    }
+    const data = await response.json();
+    return (data.categorias || []).map((c: any) => String(c));
+  },
+
+  // Progress
+  getUserProgress: async (email: string): Promise<Record<string, { completadas: string[] }>> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/progresso`);
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao buscar progresso');
+    }
+    const data = await response.json();
+    const progress = data.progresso || {};
+    Object.keys(progress).forEach(cid => {
+      progress[cid].completadas = (progress[cid].completadas || []).map((id: any) => String(id));
+    });
+    return progress;
+  },
+
+  updateProgress: async (email: string, courseId: string, lessonId: string, completed = true): Promise<Record<string, { completadas: string[] }>> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/progresso`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId, lessonId, completed })
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao atualizar progresso');
+    }
+    const data = await response.json();
+    const progress = data.progresso || {};
+    Object.keys(progress).forEach(cid => {
+      progress[cid].completadas = (progress[cid].completadas || []).map((id: any) => String(id));
+    });
+    return progress;
+  },
+
+  // Certificates
+  getUserCertificates: async (email: string): Promise<Record<string, { code: string; completedAt: string }>> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/certificados`);
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao buscar certificados');
+    }
+    const data = await response.json();
+    return data.certificados || {};
+  },
+
+  setUserCertificate: async (email: string, courseId: string, completedAt: string): Promise<Record<string, { code: string; completedAt: string }>> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/certificados`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId, completedAt })
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao criar certificado');
+    }
+    const data = await response.json();
+    return data.certificados || {};
+  },
+
+  validateCertificate: async (code: string): Promise<any> => {
+    const response = await fetch(`${COURSE_API_URL}/certificados/${encodeURIComponent(code)}`);
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Certificado invalido');
+    }
+    return response.json();
+  },
+
+  // Signature
+  getSignature: async (email: string): Promise<{ text: string; font: string } | null> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/assinatura`);
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao buscar assinatura');
+    }
+    const data = await response.json();
+    return data.assinatura || null;
+  },
+
+  setSignature: async (email: string, text: string, font: string): Promise<{ text: string; font: string }> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/assinatura`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, font })
+    });
+    if (!response.ok) {
+      const resText = await response.text().catch(() => '');
+      throw new Error(resText || 'Erro ao salvar assinatura');
+    }
+    const data = await response.json();
+    return data.assinatura;
+  },
+
+  // Questions
+  getQuestions: async (courseId: string): Promise<any[]> => {
+    const response = await fetch(`${COURSE_API_URL}/cursos/${courseId}/perguntas`);
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao buscar perguntas');
+    }
+    const data = await response.json();
+    return data.perguntas || [];
+  },
+
+  addQuestion: async (courseId: string, autorEmail: string, autorNome: string, texto: string): Promise<any> => {
+    const response = await fetch(`${COURSE_API_URL}/cursos/${courseId}/perguntas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ autorEmail, autorNome, texto })
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao criar pergunta');
+    }
+    const data = await response.json();
+    return data.pergunta;
+  },
+
+  updateQuestion: async (courseId: string, questionId: string, texto: string): Promise<any> => {
+    const response = await fetch(`${COURSE_API_URL}/cursos/${courseId}/perguntas/${questionId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto })
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao editar pergunta');
+    }
+    const data = await response.json();
+    return data.pergunta;
+  },
+
+  deleteQuestion: async (courseId: string, questionId: string): Promise<void> => {
+    const response = await fetch(`${COURSE_API_URL}/cursos/${courseId}/perguntas/${questionId}`, { method: 'DELETE' });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao excluir pergunta');
+    }
+  },
+
+  addAnswer: async (courseId: string, questionId: string, autorEmail: string, autorNome: string, texto: string): Promise<any> => {
+    const response = await fetch(`${COURSE_API_URL}/cursos/${courseId}/perguntas/${questionId}/respostas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ autorEmail, autorNome, texto })
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao responder');
+    }
+    const data = await response.json();
+    return data.resposta;
   },
 
   // Helper for single file upload (kept for other uses if needed, but CreateCourse uses bulk)

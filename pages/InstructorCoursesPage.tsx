@@ -1,33 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { Course } from '../types';
-import { Edit, Eye, Plus, Loader } from 'lucide-react';
+import React, { useState } from 'react';
+import { Course, User, UserRole } from '../types';
+import { Edit, Eye, Plus, Trash2 } from 'lucide-react';
 import Button from '../components/ui/Button';
-import { api } from '../services/api';
 
 interface InstructorCoursesPageProps {
-  courses: Course[]; // Prop fallback, but we will fetch locally
+  courses: Course[];
+  currentUser: User | null;
   onEditCourse: (course: Course) => void;
   onCreateCourse: () => void;
+  onDeleteCourse: (course: Course) => void;
 }
 
-const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ onEditCourse, onCreateCourse }) => {
-  const [localCourses, setLocalCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch courses from the real backend
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const data = await api.getCourses();
-        setLocalCourses(data);
-      } catch (error) {
-        console.error("Failed to fetch courses", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCourses();
-  }, []);
+const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ courses, currentUser, onEditCourse, onCreateCourse, onDeleteCourse }) => {
+  const visibleCourses = currentUser?.role === UserRole.ADMIN
+    ? courses
+    : courses.filter(c => c.creatorEmail && c.creatorEmail === currentUser?.email);
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   
   const renderStatusBadge = (status: string) => (
      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
@@ -37,14 +25,6 @@ const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ onEditCou
         {status === 'published' ? 'Publicado' : 'Rascunho'}
      </span>
   );
-
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader className="animate-spin text-rm-green" size={40} />
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 lg:p-10 animate-fade-in pb-24 lg:pb-10">
@@ -61,7 +41,7 @@ const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ onEditCou
 
       {/* Mobile View: Cards */}
       <div className="md:hidden space-y-4">
-         {localCourses.map(course => (
+         {visibleCourses.map(course => (
             <div key={course.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-4">
                <div className="flex items-start gap-4">
                   <img 
@@ -89,9 +69,15 @@ const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ onEditCou
                      <Eye size={16} /> Ver
                   </button>
                </div>
+               <button
+                 onClick={() => setCourseToDelete(course)}
+                 className="flex items-center justify-center gap-2 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition-colors"
+               >
+                 <Trash2 size={16} /> Excluir
+               </button>
             </div>
          ))}
-         {localCourses.length === 0 && (
+         {visibleCourses.length === 0 && (
              <div className="p-8 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
                 Você ainda não criou nenhum curso.
              </div>
@@ -110,7 +96,7 @@ const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ onEditCou
                </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-               {localCourses.map(course => (
+               {visibleCourses.map(course => (
                   <tr key={course.id} className="hover:bg-gray-50 transition-colors">
                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -123,25 +109,58 @@ const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ onEditCou
                      </td>
                      <td className="px-6 py-4 text-gray-500">{course.modules.length} módulos</td>
                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                           <button onClick={() => onEditCourse(course)} className="p-2 hover:bg-gray-200 rounded text-gray-600 transition-colors" title="Editar">
-                              <Edit size={16} />
-                           </button>
-                           <button className="p-2 hover:bg-gray-200 rounded text-gray-600 transition-colors" title="Ver como aluno">
-                              <Eye size={16} />
-                           </button>
-                        </div>
+                       <div className="flex justify-end gap-2">
+                          <button onClick={() => onEditCourse(course)} className="p-2 hover:bg-gray-200 rounded text-gray-600 transition-colors" title="Editar">
+                             <Edit size={16} />
+                          </button>
+                          <button className="p-2 hover:bg-gray-200 rounded text-gray-600 transition-colors" title="Ver como aluno">
+                             <Eye size={16} />
+                          </button>
+                          <button onClick={() => setCourseToDelete(course)} className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors" title="Excluir">
+                             <Trash2 size={16} />
+                          </button>
+                       </div>
                      </td>
                   </tr>
                ))}
             </tbody>
          </table>
-         {localCourses.length === 0 && (
+         {visibleCourses.length === 0 && (
              <div className="p-10 text-center text-gray-500">
                 Você ainda não criou nenhum curso.
              </div>
          )}
       </div>
+
+      {courseToDelete && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-gray-100">
+            <div className="p-6 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-800">Confirmar exclusao</h3>
+              <p className="text-sm text-gray-500 mt-2">
+                Tem certeza que deseja excluir o curso "{courseToDelete.title}"?
+              </p>
+            </div>
+            <div className="p-6 flex gap-3 justify-end">
+              <button
+                onClick={() => setCourseToDelete(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  onDeleteCourse(courseToDelete);
+                  setCourseToDelete(null);
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700"
+              >
+                Excluir curso
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -62,7 +62,7 @@ export const api = {
       if (!response.ok) throw new Error(data.message || 'Erro ao buscar perfil');
 
       const permissaoLabel = `${data.permissao || data.permissao_nome || data.role || ''}`.toLowerCase();
-      const isAffiliate = permissaoLabel.includes('afiliado') || data.id_permissao === 2;
+      const isAffiliate = permissaoLabel === 'afiliado';
       const role = isAffiliate ? UserRole.AFFILIATE : UserRole.ADMIN;
       return {
         id: data.id.toString(),

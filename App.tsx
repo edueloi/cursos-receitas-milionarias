@@ -241,6 +241,7 @@ function App() {
   };
 
   const activeTab = tabFromPath(location.pathname);
+  const isProducer = user?.role !== UserRole.AFFILIATE;
 
   // Toast Handler
   const addToast = (type: ToastMessage['type'], title: string, message?: string) => {
@@ -702,22 +703,26 @@ function App() {
           <Route path="/certificados" element={<CertificatesPage courses={coursesWithProgress} user={user} certificateMap={certificateMap} />} />
           <Route path="/certificados/validar/:code" element={<CertificateValidatePage courses={coursesWithProgress} />} />
           <Route path="/perfil" element={<SettingsPage user={user!} />} />
-          <Route path="/produtor" element={<InstructorDashboardPage />} />
-          <Route path="/gerenciar-cursos" element={<InstructorCoursesPage courses={coursesWithProgress} currentUser={user} onCreateCourse={handleCreateNew} onEditCourse={handleEdit} onDeleteCourse={handleDeleteCourse} />} />
+          <Route path="/produtor" element={isProducer ? <InstructorDashboardPage /> : <Navigate to="/painel" replace />} />
+          <Route path="/gerenciar-cursos" element={isProducer ? <InstructorCoursesPage courses={coursesWithProgress} currentUser={user} onCreateCourse={handleCreateNew} onEditCourse={handleEdit} onDeleteCourse={handleDeleteCourse} /> : <Navigate to="/painel" replace />} />
           <Route path="/criar-curso" element={
-            <AdminCourseCreate 
-              initialData={editingCourse}
-              currentUser={user}
-              onSave={handleSaveCourse}
-              onCancel={() => {
-                setEditingCourse(null);
-                navigate('/gerenciar-cursos');
-              }}
-              onShowToast={addToast}
-            />
+            isProducer ? (
+              <AdminCourseCreate 
+                initialData={editingCourse}
+                currentUser={user}
+                onSave={handleSaveCourse}
+                onCancel={() => {
+                  setEditingCourse(null);
+                  navigate('/gerenciar-cursos');
+                }}
+                onShowToast={addToast}
+              />
+            ) : (
+              <Navigate to="/painel" replace />
+            )
           } />
           <Route path="/assinatura" element={<SignaturePage user={user} onShowToast={addToast} />} />
-          <Route path="/afiliados" element={<AffiliatesPage />} />
+          <Route path="/afiliados" element={isProducer ? <AffiliatesPage /> : <Navigate to="/painel" replace />} />
           <Route path="*" element={<div className="p-10 text-center">Pagina nao encontrada.</div>} />
         </Routes>
       </main>

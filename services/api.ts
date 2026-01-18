@@ -1,9 +1,9 @@
 import { User, UserRole, Course, Module, Lesson, Attachment } from '../types';
 
 const API_URL =
-  import.meta.env.VITE_API_URL || 'https://api.receitasmilionarias.com.br';
+  import.meta.env.VITE_AUTH_API || 'https://api.receitasmilionarias.com.br';
 const COURSE_API_URL =
-  import.meta.env.VITE_COURSE_API_URL ||
+  import.meta.env.VITE_CURSOS_API ||
   'https://cursos-api.receitasmilionarias.com.br';
 
 // Helper to calculate duration from modules

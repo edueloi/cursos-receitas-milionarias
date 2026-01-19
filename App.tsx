@@ -663,6 +663,7 @@ function App() {
     return (
       <Routes>
         <Route path="/login" element={loginScreen} />
+        <Route path="/certificados/validar/:code" element={<CertificateValidatePage courses={[]} />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );

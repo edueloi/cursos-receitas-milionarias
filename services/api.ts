@@ -322,6 +322,15 @@ export const api = {
     return response.json();
   },
 
+  getNotifications: async (email: string): Promise<{ notifications: { id: string; type: string; title: string; body: string; at: string }[] }> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/notificacoes`);
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao buscar notificacoes');
+    }
+    return response.json();
+  },
+
   updateProgress: async (email: string, courseId: string, lessonId: string, completed = true): Promise<Record<string, { completadas: string[] }>> => {
     const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/progresso`, {
       method: 'POST',

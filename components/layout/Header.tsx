@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, UserRole } from '../../types';
 import { Bell, LogOut, User as UserIcon, Menu, ChevronDown, Settings, HelpCircle } from 'lucide-react';
+import { api } from '../../services/api';
 
 interface HeaderProps {
   user: User | null;
@@ -11,7 +12,11 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNavigate }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<{ id: string; type: string; title: string; body: string; at: string }[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -19,12 +24,44 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
       }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    const load = async () => {
+      setIsLoadingNotifications(true);
+      try {
+        const data = await api.getNotifications(user.email);
+        setNotifications(data.notifications || []);
+      } catch (error) {
+        console.error('Erro ao carregar notificacoes:', error);
+      } finally {
+        setIsLoadingNotifications(false);
+      }
+    };
+    load();
+  }, [user?.email]);
+
+  const formatRelativeTime = (iso: string) => {
+    const time = new Date(iso).getTime();
+    if (!time || Number.isNaN(time)) return 'Agora';
+    const diff = Date.now() - time;
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'Agora';
+    if (minutes < 60) return `Há ${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `Há ${hours}h`;
+    const days = Math.floor(hours / 24);
+    return days === 1 ? 'Ontem' : `Há ${days} dias`;
+  };
 
   const handleNavClick = (tab: string) => {
     onNavigate(tab);
@@ -64,10 +101,40 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
       <div className="flex items-center gap-3 lg:gap-6">
         
         {/* Notification Bell */}
-        <button className="relative p-2.5 text-gray-400 hover:text-rm-gold transition-colors hover:bg-gray-50 rounded-full group">
-          <Bell size={22} />
-          <span className="absolute top-2 right-2.5 h-2 w-2 bg-red-500 rounded-full border border-white group-hover:scale-110 transition-transform"></span>
-        </button>
+        <div className="relative" ref={notificationsRef}>
+          <button
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            className="relative p-2.5 text-gray-400 hover:text-rm-gold transition-colors hover:bg-gray-50 rounded-full group"
+          >
+            <Bell size={22} />
+            {notifications.length > 0 && (
+              <span className="absolute top-2 right-2.5 h-2 w-2 bg-red-500 rounded-full border border-white group-hover:scale-110 transition-transform"></span>
+            )}
+          </button>
+          {isNotificationsOpen && (
+            <div className="absolute right-0 top-full mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 animate-fade-in origin-top-right z-50 ring-1 ring-black/5">
+              <div className="px-4 pb-3 border-b border-gray-100">
+                <p className="text-sm font-bold text-gray-800">Notificações</p>
+                <p className="text-xs text-gray-400">Últimas atualizações</p>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {isLoadingNotifications ? (
+                  <div className="px-4 py-6 text-sm text-gray-500">Carregando...</div>
+                ) : notifications.length === 0 ? (
+                  <div className="px-4 py-6 text-sm text-gray-500">Nenhuma notificação no momento.</div>
+                ) : (
+                  notifications.map(note => (
+                    <div key={note.id} className="px-4 py-3 border-b border-gray-50">
+                      <p className="text-sm font-bold text-gray-800">{note.title}</p>
+                      <p className="text-xs text-gray-500 line-clamp-2">{note.body}</p>
+                      <p className="text-[10px] text-gray-400 mt-1">{formatRelativeTime(note.at)}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         
         {/* Divider */}
         <div className="h-8 w-px bg-gray-200 mx-1 hidden md:block"></div>

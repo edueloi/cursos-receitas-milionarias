@@ -306,6 +306,22 @@ export const api = {
     return progress;
   },
 
+  getUserDashboard: async (email: string): Promise<{
+    totalCourses: number;
+    completedCourses: number;
+    lessonsWatched: number;
+    questionsAsked: number;
+    progressByCourse: { courseId: string; courseTitle: string; completedLessons: number; totalLessons: number; progressPercent: number }[];
+    recentActivity: { type: string; title: string; at: string }[];
+  }> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/dashboard`);
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao buscar dashboard do usuario');
+    }
+    return response.json();
+  },
+
   updateProgress: async (email: string, courseId: string, lessonId: string, completed = true): Promise<Record<string, { completadas: string[] }>> => {
     const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/progresso`, {
       method: 'POST',

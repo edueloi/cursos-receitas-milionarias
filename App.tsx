@@ -335,13 +335,21 @@ function App() {
   };
 
   const handleEdit = (course: Course) => {
+    if (course.creatorEmail && course.creatorEmail !== user?.email) {
+      addToast('error', 'Sem permissao', 'Apenas o dono pode editar este curso.');
+      return;
+    }
     setEditingCourse(course);
     navigate('/criar-curso');
   };
 
   const handleDeleteCourse = async (course: Course) => {
+    if (course.creatorEmail && course.creatorEmail !== user?.email) {
+      addToast('error', 'Sem permissao', 'Apenas o dono pode excluir este curso.');
+      return;
+    }
     try {
-      await api.deleteCourse(course.id);
+      await api.deleteCourse(course.id, user?.email || '');
       addToast('success', 'Curso excluido!', 'O curso foi removido com sucesso.');
       refreshCourses();
       refreshLists();

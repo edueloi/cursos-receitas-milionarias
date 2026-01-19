@@ -206,8 +206,9 @@ export const api = {
     }
   },
 
-  deleteCourse: async (id: string): Promise<void> => {
-     const response = await fetch(`${COURSE_API_URL}/cursos/${id}`, { method: 'DELETE' });
+  deleteCourse: async (id: string, email: string): Promise<void> => {
+     const query = email ? `?email=${encodeURIComponent(email)}` : '';
+     const response = await fetch(`${COURSE_API_URL}/cursos/${id}${query}`, { method: 'DELETE' });
      if (!response.ok) {
        const data = await response.json().catch(() => ({}));
        throw new Error(data.error || 'Erro ao excluir curso');

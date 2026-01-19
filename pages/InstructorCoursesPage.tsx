@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Course, User, UserRole } from '../types';
+import { Course, User } from '../types';
 import { Edit, Eye, Plus, Trash2 } from 'lucide-react';
 import Button from '../components/ui/Button';
 
@@ -12,9 +12,9 @@ interface InstructorCoursesPageProps {
 }
 
 const InstructorCoursesPage: React.FC<InstructorCoursesPageProps> = ({ courses, currentUser, onEditCourse, onCreateCourse, onDeleteCourse }) => {
-  const visibleCourses = currentUser?.role === UserRole.ADMIN
-    ? courses
-    : courses.filter(c => c.creatorEmail && c.creatorEmail === currentUser?.email);
+  const visibleCourses = courses.filter(
+    c => c.creatorEmail && c.creatorEmail === currentUser?.email
+  );
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   
   const renderStatusBadge = (status: string) => (

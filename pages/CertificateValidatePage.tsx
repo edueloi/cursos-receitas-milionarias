@@ -61,7 +61,7 @@ const CertificateValidatePage: React.FC<CertificateValidatePageProps> = ({ cours
               <p><span className="font-bold">Código:</span> {data.code}</p>
               <p><span className="font-bold">Curso:</span> {course?.title || data.courseId}</p>
               <p><span className="font-bold">Instrutor:</span> {course?.creatorName || 'Instrutor'}</p>
-              <p><span className="font-bold">Aluno:</span> {data.email}</p>
+              <p><span className="font-bold">Aluno:</span> {data.name || data.email}</p>
               <p><span className="font-bold">Conclusão:</span> {new Date(data.completedAt).toLocaleDateString('pt-BR')}</p>
             </div>
           </>

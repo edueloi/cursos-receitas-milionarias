@@ -370,7 +370,7 @@ function App() {
         const completed = progress[courseId]?.completadas?.length || 0;
         if (total > 0 && completed >= total && !certificateMap[courseId]) {
           const now = new Date().toISOString();
-          const certs = await api.setUserCertificate(user.email, courseId, now);
+          const certs = await api.setUserCertificate(user.email, courseId, now, user.name);
           setCertificateMap(certs);
         }
       }
@@ -410,7 +410,7 @@ function App() {
         if (total > 0 && completed >= total && !certificateMap[course.id]) {
           try {
             const now = new Date().toISOString();
-            const certs = await api.setUserCertificate(user.email, course.id, now);
+            const certs = await api.setUserCertificate(user.email, course.id, now, user.name);
             setCertificateMap(certs);
           } catch (error) {
             console.error('Erro ao gerar certificado:', error);

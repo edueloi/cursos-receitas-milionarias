@@ -360,11 +360,11 @@ export const api = {
     return data.certificados || {};
   },
 
-  setUserCertificate: async (email: string, courseId: string, completedAt: string): Promise<Record<string, { code: string; completedAt: string }>> => {
+  setUserCertificate: async (email: string, courseId: string, completedAt: string, name?: string): Promise<Record<string, { code: string; completedAt: string }>> => {
     const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/certificados`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ courseId, completedAt })
+      body: JSON.stringify({ courseId, completedAt, name })
     });
     if (!response.ok) {
       const text = await response.text().catch(() => '');

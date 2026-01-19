@@ -279,6 +279,7 @@ function App() {
         const userData = await api.getMe(token);
         
         setUser(userData);
+        api.upsertUserProfile(userData.email, userData.name).catch(() => {});
         addToast('success', 'Login realizado com sucesso!', `Bem-vindo, ${userData.name.split(' ')[0]}.`);
         const nextPath = postLoginPath || '/painel';
         setPostLoginPath(null);

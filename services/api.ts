@@ -76,6 +76,18 @@ export const api = {
     }
   },
 
+  upsertUserProfile: async (email: string, name: string): Promise<void> => {
+    const response = await fetch(`${COURSE_API_URL}/usuarios/${encodeURIComponent(email)}/perfil`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao atualizar perfil no cursos API');
+    }
+  },
+
   // --- Course Management (New Backend) ---
 
   // List all courses

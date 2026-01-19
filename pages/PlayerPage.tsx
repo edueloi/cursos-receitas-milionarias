@@ -59,6 +59,7 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack, user, onMarkLes
   }, [course.id]);
 
   const isOwner = !!user?.email && user.email === course.creatorEmail;
+  const activeObjectives = activeLesson?.learningObjectives || [];
 
   const handleSendQuestion = async () => {
     if (!user?.email || !questionText.trim()) return;
@@ -255,27 +256,33 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack, user, onMarkLes
                   <div className="space-y-6">
                     <div>
                       <span className="text-xs font-bold text-rm-gold uppercase tracking-wider mb-2 block">Aula Atual</span>
-                    <h3 className="text-xl md:text-2xl font-serif font-bold text-rm-green mb-4 leading-tight">{activeLesson?.title || 'Aula nao cadastrada'}</h3>
+                    <h3 className="text-xl md:text-2xl font-serif font-bold text-rm-green mb-4 leading-tight">{activeLesson?.title || 'Aula não cadastrada'}</h3>
                     <p className="text-sm md:text-base text-gray-600 leading-relaxed">
-                        {activeLesson?.description || 'Nesta aula, vamos abordar os principais conceitos necessarios para voce escalar suas vendas. Prepare seu caderno de anotacoes e preste atencao aos detalhes praticos demonstrados.'}
+                        {activeLesson?.description || 'Descrição não cadastrada para esta aula.'}
                     </p>
                     {activeLesson?.id && (
                       <button
                         onClick={() => onMarkLessonComplete?.(course.id, activeLesson.id)}
                         className="mt-4 px-4 py-2 rounded-lg text-sm font-bold text-white bg-rm-green hover:bg-[#0f241e]"
                       >
-                        Marcar como concluida
+                        Marcar como concluída
                       </button>
                     )}
                     </div>
                     
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                        <h4 className="font-bold text-rm-green mb-3 text-sm">O que você vai aprender</h4>
-                       <ul className="space-y-2 text-sm text-gray-600">
-                          <li className="flex items-center gap-2"><CheckCircle size={16} className="text-rm-gold flex-shrink-0"/> Estratégias de precificação</li>
-                          <li className="flex items-center gap-2"><CheckCircle size={16} className="text-rm-gold flex-shrink-0"/> Como abordar clientes no Instagram</li>
-                          <li className="flex items-center gap-2"><CheckCircle size={16} className="text-rm-gold flex-shrink-0"/> Fechamento de vendas no WhatsApp</li>
-                       </ul>
+                       {activeObjectives.length > 0 ? (
+                         <ul className="space-y-2 text-sm text-gray-600">
+                           {activeObjectives.map((item, idx) => (
+                             <li key={`${activeLesson?.id || 'lesson'}-${idx}`} className="flex items-center gap-2">
+                               <CheckCircle size={16} className="text-rm-gold flex-shrink-0" /> {item}
+                             </li>
+                           ))}
+                         </ul>
+                       ) : (
+                         <p className="text-sm text-gray-500">Nenhum objetivo cadastrado para esta aula.</p>
+                       )}
                     </div>
                   </div>
                 )}

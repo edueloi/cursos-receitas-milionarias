@@ -36,6 +36,7 @@ export interface Lesson {
   videoUrl?: string; 
   videoType?: 'upload' | 'embed';
   description?: string;
+  learningObjectives?: string[];
   isFreePreview?: boolean;
   attachments?: Attachment[];
   completed?: boolean;

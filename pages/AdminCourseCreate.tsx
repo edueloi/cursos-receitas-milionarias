@@ -39,6 +39,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
   // UI State
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [learningInputMap, setLearningInputMap] = useState<Record<string, string>>({});
 
   // File Staging (Store actual files to upload on save)
   const filesToUpload = useRef<{[key: string]: File}>({});
@@ -244,7 +245,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
   const toggleModuleExpand = (id: string) => setExpandedModules(p => ({ ...p, [id]: !p[id] }));
   
   const addLesson = (modId: string) => {
-    const newL: Lesson = { id: Date.now().toString(), title: 'Nova Aula', duration: '05:00', videoType: 'upload' };
+    const newL: Lesson = { id: Date.now().toString(), title: 'Nova Aula', duration: '05:00', videoType: 'upload', description: '', learningObjectives: [] };
     setModules(modules.map(m => m.id === modId ? { ...m, lessons: [...m.lessons, newL] } : m));
     setEditingLessonId(newL.id);
   };
@@ -409,7 +410,57 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
                                   <div className="mt-4 pt-4 border-t border-gray-100 space-y-4 animate-fade-in">
                                      <Input label="Título" value={lesson.title} onChange={e => updateLesson(module.id, lesson.id, { title: e.target.value })} />
                                      <Input label="Duração (MM:SS)" value={lesson.duration} onChange={e => updateLesson(module.id, lesson.id, { duration: e.target.value })} placeholder="Ex: 10:00" className="mt-2" />
-                                     
+                                     <div>
+                                       <label className="block text-sm font-bold text-gray-700 mb-2">Descrição da Aula</label>
+                                       <textarea
+                                         rows={4}
+                                         className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none focus:ring-2 focus:ring-rm-gold"
+                                         value={lesson.description || ''}
+                                         onChange={e => updateLesson(module.id, lesson.id, { description: e.target.value })}
+                                       />
+                                     </div>
+                                     <div>
+                                       <label className="block text-sm font-bold text-gray-700 mb-2">O que você vai aprender</label>
+                                       <div className="flex gap-2">
+                                         <input
+                                           className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm"
+                                           placeholder="Ex: Estratégias de precificação"
+                                           value={learningInputMap[lesson.id] || ''}
+                                           onChange={(e) => setLearningInputMap(prev => ({ ...prev, [lesson.id]: e.target.value }))}
+                                         />
+                                         <button
+                                           type="button"
+                                           onClick={() => {
+                                             const text = (learningInputMap[lesson.id] || '').trim();
+                                             if (!text) return;
+                                             const next = [...(lesson.learningObjectives || []), text];
+                                             updateLesson(module.id, lesson.id, { learningObjectives: next });
+                                             setLearningInputMap(prev => ({ ...prev, [lesson.id]: '' }));
+                                           }}
+                                           className="px-3 py-2 rounded-lg text-xs font-bold bg-rm-green text-white hover:bg-[#0f241e]"
+                                         >
+                                           Adicionar
+                                         </button>
+                                       </div>
+                                       {(lesson.learningObjectives || []).length > 0 && (
+                                         <div className="mt-3 space-y-2">
+                                           {(lesson.learningObjectives || []).map((item, idx) => (
+                                             <div key={`${lesson.id}-${idx}`} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
+                                               <span className="truncate flex-1">{item}</span>
+                                               <button
+                                                 type="button"
+                                                 onClick={() => {
+                                                   const next = (lesson.learningObjectives || []).filter((_, i) => i !== idx);
+                                                   updateLesson(module.id, lesson.id, { learningObjectives: next });
+                                                 }}
+                                               >
+                                                 <X size={14} className="text-red-400" />
+                                               </button>
+                                             </div>
+                                           ))}
+                                         </div>
+                                       )}
+                                     </div>
                                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center cursor-pointer hover:border-rm-gold mt-4" onClick={() => triggerLessonVideoUpload(module.id, lesson.id)}>
                                         {lesson.videoUrl ? <p className="text-sm text-green-600 font-bold flex items-center justify-center gap-2"><CheckSquare size={16}/> Vídeo Selecionado</p> : <p className="text-sm text-gray-500">Clique para selecionar vídeo (MP4)</p>}
                                      </div>

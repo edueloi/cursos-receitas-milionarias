@@ -105,6 +105,8 @@ export const api = {
              id: `les-${mIdx}-${lIdx}`,
              title: l.tituloAula,
              duration: l.duracao,
+             description: l.descricaoAula || l.descricao || '',
+             learningObjectives: Array.isArray(l.objetivos) ? l.objetivos : [],
              videoType: l.video?.filename ? 'upload' : 'embed',
              videoUrl: l.video?.filename ? `${COURSE_API_URL}/videos/${encodeURIComponent(l.video.filename)}` : (l.video?.url || ''),
              isFreePreview: l.gratuita,
@@ -181,6 +183,8 @@ export const api = {
         return {
           tituloAula: lesson.title,
           duracao: lesson.duration,
+          descricaoAula: lesson.description || '',
+          objetivos: lesson.learningObjectives || [],
           gratuita: lesson.isFreePreview,
           video: videoData,
           materiais: materiaisData

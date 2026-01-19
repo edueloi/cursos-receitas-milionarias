@@ -711,7 +711,7 @@ function App() {
           <Route path="/certificados" element={<CertificatesPage courses={coursesWithProgress} user={user} certificateMap={certificateMap} />} />
           <Route path="/certificados/validar/:code" element={<CertificateValidatePage courses={coursesWithProgress} />} />
           <Route path="/perfil" element={<SettingsPage user={user!} />} />
-          <Route path="/produtor" element={isProducer ? <InstructorDashboardPage /> : <Navigate to="/painel" replace />} />
+          <Route path="/produtor" element={isProducer ? <InstructorDashboardPage currentUser={user} /> : <Navigate to="/painel" replace />} />
           <Route path="/gerenciar-cursos" element={isProducer ? <InstructorCoursesPage courses={coursesWithProgress} currentUser={user} onCreateCourse={handleCreateNew} onEditCourse={handleEdit} onDeleteCourse={handleDeleteCourse} /> : <Navigate to="/painel" replace />} />
           <Route path="/criar-curso" element={
             isProducer ? (

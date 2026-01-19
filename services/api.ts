@@ -383,6 +383,22 @@ export const api = {
     return data.assinatura;
   },
 
+  // Instructor dashboard
+  getInstructorDashboard: async (email: string): Promise<{
+    totalCourses: number;
+    totalStudents: number;
+    totalViews: number;
+    totalQuestions: number;
+    topLessons: { courseId: string; courseTitle: string; lessonTitle: string; views: number }[];
+  }> => {
+    const response = await fetch(`${COURSE_API_URL}/instrutor/${encodeURIComponent(email)}/dashboard`);
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Erro ao buscar painel do instrutor');
+    }
+    return response.json();
+  },
+
   // Questions
   getQuestions: async (courseId: string): Promise<any[]> => {
     const response = await fetch(`${COURSE_API_URL}/cursos/${courseId}/perguntas`);

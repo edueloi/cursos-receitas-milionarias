@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, UserRole } from '../../types';
-import { Bell, LogOut, User as UserIcon, Menu, ChevronDown, Settings, HelpCircle } from 'lucide-react';
+import { Bell, LogOut, User as UserIcon, Menu, ChevronDown, Settings, HelpCircle, GraduationCap, MessageCircle, Award, BookOpen } from 'lucide-react';
 import { api } from '../../services/api';
 
 interface HeaderProps {
@@ -15,6 +15,7 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<{ id: string; type: string; title: string; body: string; at: string }[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +37,13 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
 
   useEffect(() => {
     if (!user?.email) return;
+    const storageKey = `rm_read_notifications_${user.email}`;
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) setReadNotificationIds(JSON.parse(stored));
+    } catch {
+      setReadNotificationIds([]);
+    }
     const load = async () => {
       setIsLoadingNotifications(true);
       try {
@@ -50,6 +58,16 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
     load();
   }, [user?.email]);
 
+  useEffect(() => {
+    if (!user?.email) return;
+    const storageKey = `rm_read_notifications_${user.email}`;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(readNotificationIds));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [readNotificationIds, user?.email]);
+
   const formatRelativeTime = (iso: string) => {
     const time = new Date(iso).getTime();
     if (!time || Number.isNaN(time)) return 'Agora';
@@ -61,6 +79,22 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
     if (hours < 24) return `Há ${hours}h`;
     const days = Math.floor(hours / 24);
     return days === 1 ? 'Ontem' : `Há ${days} dias`;
+  };
+
+  const unreadNotifications = notifications.filter(note => !readNotificationIds.includes(note.id));
+  const markAsRead = (id: string) => {
+    setReadNotificationIds(prev => (prev.includes(id) ? prev : [...prev, id]));
+  };
+  const clearAllNotifications = () => {
+    setReadNotificationIds(notifications.map(n => n.id));
+  };
+
+  const getNotificationStyle = (type: string) => {
+    if (type === 'new-student') return { icon: GraduationCap, color: 'bg-blue-50 text-blue-600' };
+    if (type === 'certificate') return { icon: Award, color: 'bg-rm-gold/20 text-rm-green' };
+    if (type === 'question' || type === 'answer') return { icon: MessageCircle, color: 'bg-purple-50 text-purple-600' };
+    if (type === 'new-course') return { icon: BookOpen, color: 'bg-green-50 text-green-600' };
+    return { icon: Bell, color: 'bg-gray-100 text-gray-500' };
   };
 
   const handleNavClick = (tab: string) => {
@@ -107,29 +141,52 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
             className="relative p-2.5 text-gray-400 hover:text-rm-gold transition-colors hover:bg-gray-50 rounded-full group"
           >
             <Bell size={22} />
-            {notifications.length > 0 && (
+            {unreadNotifications.length > 0 && (
               <span className="absolute top-2 right-2.5 h-2 w-2 bg-red-500 rounded-full border border-white group-hover:scale-110 transition-transform"></span>
             )}
           </button>
           {isNotificationsOpen && (
             <div className="absolute right-0 top-full mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 animate-fade-in origin-top-right z-50 ring-1 ring-black/5">
-              <div className="px-4 pb-3 border-b border-gray-100">
-                <p className="text-sm font-bold text-gray-800">Notificações</p>
-                <p className="text-xs text-gray-400">Últimas atualizações</p>
+              <div className="px-4 pb-3 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-gray-800">Notificações</p>
+                  <p className="text-xs text-gray-400">Últimas atualizações</p>
+                </div>
+                {unreadNotifications.length > 0 && (
+                  <button
+                    onClick={clearAllNotifications}
+                    className="text-xs font-bold text-rm-gold hover:underline"
+                  >
+                    Limpar tudo
+                  </button>
+                )}
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {isLoadingNotifications ? (
                   <div className="px-4 py-6 text-sm text-gray-500">Carregando...</div>
-                ) : notifications.length === 0 ? (
+                ) : unreadNotifications.length === 0 ? (
                   <div className="px-4 py-6 text-sm text-gray-500">Nenhuma notificação no momento.</div>
                 ) : (
-                  notifications.map(note => (
-                    <div key={note.id} className="px-4 py-3 border-b border-gray-50">
-                      <p className="text-sm font-bold text-gray-800">{note.title}</p>
-                      <p className="text-xs text-gray-500 line-clamp-2">{note.body}</p>
-                      <p className="text-[10px] text-gray-400 mt-1">{formatRelativeTime(note.at)}</p>
-                    </div>
-                  ))
+                  unreadNotifications.map(note => {
+                    const meta = getNotificationStyle(note.type);
+                    const Icon = meta.icon;
+                    return (
+                      <button
+                        key={note.id}
+                        onClick={() => markAsRead(note.id)}
+                        className="w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors flex gap-3"
+                      >
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${meta.color}`}>
+                          <Icon size={16} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-800">{note.title}</p>
+                          <p className="text-xs text-gray-500 line-clamp-2">{note.body}</p>
+                          <p className="text-[10px] text-gray-400 mt-1">{formatRelativeTime(note.at)}</p>
+                        </div>
+                      </button>
+                    );
+                  })
                 )}
               </div>
             </div>

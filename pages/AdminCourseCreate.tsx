@@ -40,6 +40,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [learningInputMap, setLearningInputMap] = useState<Record<string, string>>({});
+  const [removeCover, setRemoveCover] = useState(false);
 
   // File Staging (Store actual files to upload on save)
   const filesToUpload = useRef<{[key: string]: File}>({});
@@ -107,6 +108,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
 
     if (type === 'image') {
         filesToUpload.current['cover'] = file;
+        setRemoveCover(false);
         setThumbnailUrl(previewUrl);
         onShowToast('info', 'Imagem selecionada', 'Será enviada ao salvar o curso.');
     } 
@@ -116,7 +118,8 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
         
         updateLesson(moduleId, lessonId, { 
             videoUrl: previewUrl, 
-            videoType: 'upload' 
+            videoType: 'upload',
+            removeVideo: false
         });
         const tempVideo = document.createElement('video');
         tempVideo.preload = 'metadata';
@@ -224,7 +227,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
     };
 
     try {
-        await api.createCourse(courseData, filesToUpload.current, currentUser);
+        await api.createCourse(courseData, filesToUpload.current, currentUser, { removeCover });
         onShowToast('success', 'Curso Salvo!', 'Seu curso e arquivos foram enviados com sucesso.');
         onSave(courseData); 
     } catch (error: any) {
@@ -245,7 +248,7 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
   const toggleModuleExpand = (id: string) => setExpandedModules(p => ({ ...p, [id]: !p[id] }));
   
   const addLesson = (modId: string) => {
-    const newL: Lesson = { id: Date.now().toString(), title: 'Nova Aula', duration: '05:00', videoType: 'upload', description: '', learningObjectives: [] };
+    const newL: Lesson = { id: Date.now().toString(), title: 'Nova Aula', duration: '05:00', videoType: 'upload', description: '', learningObjectives: [], removeVideo: false };
     setModules(modules.map(m => m.id === modId ? { ...m, lessons: [...m.lessons, newL] } : m));
     setEditingLessonId(newL.id);
   };
@@ -262,6 +265,19 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
       if (lesson) {
           updateLesson(modId, lesId, { attachments: (lesson.attachments || []).filter(a => a.id !== attId) });
       }
+  };
+  const handleRemoveCover = () => {
+    if (filesToUpload.current['cover']) {
+      delete filesToUpload.current['cover'];
+    }
+    setThumbnailUrl('');
+    setRemoveCover(true);
+  };
+  const handleRemoveVideo = (modId: string, lesId: string) => {
+    if (filesToUpload.current[`video_${lesId}`]) {
+      delete filesToUpload.current[`video_${lesId}`];
+    }
+    updateLesson(modId, lesId, { videoUrl: '', videoType: undefined, removeVideo: true });
   };
 
   return (
@@ -367,9 +383,31 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
             <div className="space-y-6">
                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                   <h3 className="font-bold text-rm-green mb-4">Capa do Curso</h3>
-                  <div onClick={triggerThumbnailUpload} className="aspect-video bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-rm-gold overflow-hidden relative">
-                     {thumbnailUrl ? <img src={thumbnailUrl} className="w-full h-full object-cover" /> : <div className="text-center text-gray-400"><Upload className="mx-auto mb-2" /><span className="text-xs">Selecionar Imagem</span></div>}
+                  <div
+                    onClick={thumbnailUrl ? undefined : triggerThumbnailUpload}
+                    className={`aspect-video bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-rm-gold overflow-hidden relative ${thumbnailUrl ? 'cursor-default' : 'cursor-pointer'}`}
+                  >
+                     {thumbnailUrl ? (
+                       <div className="w-full h-full relative">
+                         <img src={thumbnailUrl} className="w-full h-full object-cover" />
+                         <button
+                           type="button"
+                           onClick={(e) => { e.stopPropagation(); handleRemoveCover(); }}
+                           className="absolute top-3 right-3 px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white hover:bg-red-700"
+                         >
+                           Excluir capa
+                         </button>
+                       </div>
+                     ) : (
+                       <div className="text-center text-gray-400">
+                         <Upload className="mx-auto mb-2" />
+                         <span className="text-xs">Selecionar Imagem</span>
+                       </div>
+                     )}
                   </div>
+                  {thumbnailUrl && (
+                    <p className="text-xs text-gray-400 mt-2">Remova a capa para enviar outra.</p>
+                  )}
                </div>
                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                    <p className="text-sm text-gray-500">Curso incluso na assinatura.</p>
@@ -461,9 +499,33 @@ const AdminCourseCreate: React.FC<AdminCourseCreateProps> = ({ initialData, curr
                                          </div>
                                        )}
                                      </div>
-                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center cursor-pointer hover:border-rm-gold mt-4" onClick={() => triggerLessonVideoUpload(module.id, lesson.id)}>
-                                        {lesson.videoUrl ? <p className="text-sm text-green-600 font-bold flex items-center justify-center gap-2"><CheckSquare size={16}/> Vídeo Selecionado</p> : <p className="text-sm text-gray-500">Clique para selecionar vídeo (MP4)</p>}
+                                     <div
+                                       className={`bg-gray-50 p-4 rounded-lg border border-gray-200 text-center hover:border-rm-gold mt-4 ${lesson.videoUrl ? 'cursor-default' : 'cursor-pointer'}`}
+                                       onClick={lesson.videoUrl ? undefined : () => triggerLessonVideoUpload(module.id, lesson.id)}
+                                     >
+                                        {lesson.videoUrl ? (
+                                          <div className="space-y-3">
+                                            <video
+                                              src={lesson.videoUrl}
+                                              className="w-full rounded-lg"
+                                              controls
+                                              preload="metadata"
+                                            />
+                                            <button
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); handleRemoveVideo(module.id, lesson.id); }}
+                                              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white hover:bg-red-700"
+                                            >
+                                              Excluir vídeo
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <p className="text-sm text-gray-500">Clique para selecionar vídeo (MP4)</p>
+                                        )}
                                      </div>
+                                     {lesson.videoUrl && (
+                                       <p className="text-xs text-gray-400">Remova o vídeo para enviar outro.</p>
+                                     )}
                                      <div>
                                         <div className="flex justify-between mb-2">
                                            <label className="text-xs font-bold text-gray-500 uppercase">Materiais</label>

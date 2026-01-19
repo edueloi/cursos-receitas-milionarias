@@ -127,7 +127,7 @@ export const api = {
   },
 
   // Create/Upload Course (Multipart)
-  createCourse: async (course: Course, files: { [key: string]: File }, user: User): Promise<any> => {
+  createCourse: async (course: Course, files: { [key: string]: File }, user: User, options?: { removeCover?: boolean }): Promise<any> => {
     const formData = new FormData();
 
     // 1. Basic Fields
@@ -142,6 +142,9 @@ export const api = {
     formData.append('rascunho', String(course.status === 'draft'));
 
     // 2. Cover Image
+    if (options?.removeCover) {
+      formData.append('removerImagemCapa', 'true');
+    }
     if (files['cover']) {
       formData.append('imagemCapa', files['cover']);
     }
@@ -155,7 +158,9 @@ export const api = {
         let videoData = {};
         const videoFile = files[`video_${lesson.id}`];
         
-        if (videoFile) {
+        if (lesson.removeVideo) {
+          videoData = { remove: true };
+        } else if (videoFile) {
           // Append to formData (multer handles array)
           formData.append('videos', videoFile);
           // Backend reference by filename

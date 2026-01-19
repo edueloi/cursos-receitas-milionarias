@@ -35,6 +35,7 @@ export interface Lesson {
   duration: string; // e.g., "10:30"
   videoUrl?: string; 
   videoType?: 'upload' | 'embed';
+  removeVideo?: boolean;
   description?: string;
   learningObjectives?: string[];
   isFreePreview?: boolean;

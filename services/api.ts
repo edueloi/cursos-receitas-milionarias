@@ -439,6 +439,7 @@ export const api = {
     totalViews: number;
     totalQuestions: number;
     topLessons: { courseId: string; courseTitle: string; lessonTitle: string; views: number }[];
+    students?: { name: string; email: string; courses: { id: string; title: string }[]; joinedAt: string | null }[];
   }> => {
     const response = await fetch(`${COURSE_API_URL}/instrutor/${encodeURIComponent(email)}/dashboard`);
     if (!response.ok) {

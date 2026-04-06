@@ -38,7 +38,6 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
     { id: 'instructor-courses', label: 'Gerenciar Cursos', desc: 'Editar conteúdo', icon: List, accent: 'from-indigo-400 to-indigo-600' },
     { id: 'create-course', label: 'Criar Novo Curso', desc: 'Publicar conteúdo', icon: PlusCircle, accent: 'from-green-400 to-green-600' },
     { id: 'signature', label: 'Assinatura', desc: 'Certificados', icon: PenTool, accent: 'from-pink-400 to-pink-600' },
-    { id: 'affiliates', label: 'Afiliados', desc: 'Equipe de vendas', icon: ShieldCheck, accent: 'from-orange-400 to-orange-600' },
   ];
 
   const handleItemClick = (tabId: string) => {

@@ -8,12 +8,21 @@ interface InstructorDashboardPageProps {
 }
 
 const InstructorDashboardPage: React.FC<InstructorDashboardPageProps> = ({ currentUser }) => {
-  const [stats, setStats] = useState({
+  type StatsType = {
+    totalCourses: number;
+    totalStudents: number;
+    totalViews: number;
+    totalQuestions: number;
+    topLessons: { courseId: string; courseTitle: string; lessonTitle: string; views: number }[];
+    students?: { name: string; email: string; courses: { id: string; title: string }[]; joinedAt: string | null }[];
+  };
+
+  const [stats, setStats] = useState<StatsType>({
     totalCourses: 0,
     totalStudents: 0,
     totalViews: 0,
     totalQuestions: 0,
-    topLessons: [] as { courseId: string; courseTitle: string; lessonTitle: string; views: number }[]
+    topLessons: []
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -272,6 +281,54 @@ const InstructorDashboardPage: React.FC<InstructorDashboardPageProps> = ({ curre
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Students List */}
+      <div className="mt-5 sm:mt-6 bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 p-5 sm:p-6 mb-8 w-full">
+        <div className="flex items-center gap-2.5 mb-5">
+          <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-500">
+            <Users size={18} />
+          </div>
+          <h3 className="font-bold text-gray-800 text-sm sm:text-base">Meus Alunos</h3>
+        </div>
+        
+        {stats.students && stats.students.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-100 text-gray-400 text-xs uppercase tracking-wider">
+                  <th className="pb-3 px-4 font-semibold w-1/3">Aluno</th>
+                  <th className="pb-3 px-4 font-semibold w-1/3">Cursos</th>
+                  <th className="pb-3 px-4 font-semibold w-1/3">Cadastrado em</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm">
+                {stats.students.map((student, idx) => (
+                  <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 px-4 align-top">
+                      <p className="font-bold text-gray-800">{student.name}</p>
+                      <p className="text-xs text-gray-500">{student.email}</p>
+                    </td>
+                    <td className="py-4 px-4 align-top">
+                      <div className="flex flex-wrap gap-1">
+                        {student.courses.map(c => (
+                           <span key={c.id} className="text-[10px] bg-rm-green/10 text-rm-green px-2 py-0.5 rounded-md font-medium">
+                             {c.title}
+                           </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 align-top text-gray-600 text-xs">
+                      {student.joinedAt ? new Date(student.joinedAt).toLocaleDateString() : '--'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm text-center py-6">Nenhum aluno inscrito ainda.</p>
+        )}
       </div>
     </div>
   );

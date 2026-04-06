@@ -25,7 +25,7 @@ import AdminCourseCreate from './pages/AdminCourseCreate';
 // Components
 import Button from './components/ui/Button';
 import ToastContainer, { ToastMessage } from './components/ui/Toast';
-import { ExternalLink, Eye, EyeOff, Lock, Mail, ArrowRight, CheckCircle } from 'lucide-react';
+import { ExternalLink, Eye, EyeOff, Lock, Mail, ArrowRight, CheckCircle, Zap } from 'lucide-react';
 
 /*
 // Initial Mock Data with Requested YouTube Video
@@ -225,7 +225,6 @@ function App() {
     instructor: '/produtor',
     'instructor-courses': '/gerenciar-cursos',
     'create-course': '/criar-curso',
-    affiliates: '/afiliados',
     signature: '/assinatura',
     help: '/ajuda'
   };
@@ -239,7 +238,6 @@ function App() {
     if (pathname.startsWith('/gerenciar-cursos')) return 'instructor-courses';
     if (pathname.startsWith('/criar-curso')) return 'create-course';
     if (pathname.startsWith('/produtor')) return 'instructor';
-    if (pathname.startsWith('/afiliados')) return 'affiliates';
     if (pathname.startsWith('/assinatura')) return 'signature';
     if (pathname.startsWith('/ajuda')) return 'help';
     return 'dashboard';
@@ -712,7 +710,7 @@ function App() {
           <Route path="/instructor" element={<Navigate to="/produtor" replace />} />
           <Route path="/instructor-courses" element={<Navigate to="/gerenciar-cursos" replace />} />
           <Route path="/create-course" element={<Navigate to="/criar-curso" replace />} />
-          <Route path="/affiliates" element={<Navigate to="/afiliados" replace />} />
+
           <Route path="/painel" element={<DashboardPage user={user!} />} />
           <Route path="/cursos" element={<CoursesPage courses={coursesWithProgress} onSelectCourse={handleSelectCourse} user={user} myCourseIds={myCourseIds} onAddToMyCourses={handleAddToMyCourses} />} />
           <Route path="/meus-cursos" element={<MyCoursesPage courses={coursesWithProgress} onSelectCourse={handleSelectCourse} user={user} myCourseIds={myCourseIds} favoriteIds={favoriteIds} onToggleFavorite={handleToggleFavorite} />} />
@@ -738,7 +736,7 @@ function App() {
             )
           } />
           <Route path="/assinatura" element={<SignaturePage user={user} onShowToast={addToast} />} />
-          <Route path="/afiliados" element={isProducer ? <AffiliatesPage /> : <Navigate to="/painel" replace />} />
+
           <Route path="/ajuda" element={<HelpPage />} />
           <Route path="*" element={<div className="p-10 text-center">Pagina nao encontrada.</div>} />
         </Routes>

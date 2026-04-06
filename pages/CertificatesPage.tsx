@@ -73,11 +73,21 @@ const CertificatesPage: React.FC<CertificatesPageProps> = ({ courses, user, cert
 
   const signatureFamily = (fontKey?: string) => {
     if (!fontKey) return '"Playfair Display", serif';
-    if (fontKey === 'great-vibes') return '"Great Vibes", cursive';
-    if (fontKey === 'allura') return '"Allura", cursive';
-    if (fontKey === 'sacramento') return '"Sacramento", cursive';
-    if (fontKey === 'pinyon-script') return '"Pinyon Script", cursive';
-    return '"Playfair Display", serif';
+    const fontMap: Record<string, string> = {
+      'great-vibes': '"Great Vibes", cursive',
+      'allura': '"Allura", cursive',
+      'sacramento': '"Sacramento", cursive',
+      'pinyon-script': '"Pinyon Script", cursive',
+      'dancing-script': '"Dancing Script", cursive',
+      'parisienne': '"Parisienne", cursive',
+      'satisfy': '"Satisfy", cursive',
+      'lobster': '"Lobster", cursive',
+      'kaushan-script': '"Kaushan Script", cursive',
+      'caveat': '"Caveat", cursive',
+      'courgette': '"Courgette", cursive',
+      'tangerine': '"Tangerine", cursive',
+    };
+    return fontMap[fontKey] || '"Playfair Display", serif';
   };
 
   return (

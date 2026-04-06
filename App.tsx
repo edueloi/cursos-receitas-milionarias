@@ -693,6 +693,7 @@ function App() {
         activeTab={activeTab}
         onTabChange={navigateTo}
         onClose={() => setIsSidebarOpen(false)}
+        onLogout={handleLogout}
       />
 
       {/* Main Content - Full Width */}

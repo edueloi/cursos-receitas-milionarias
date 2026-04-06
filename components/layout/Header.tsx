@@ -104,24 +104,30 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
   if (!user) return null;
 
   return (
-    <header className="h-16 sm:h-[68px] fixed top-0 right-0 left-0 z-40 px-3 sm:px-5 lg:px-8 transition-all duration-300 bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between">
+    <header className="h-16 sm:h-[68px] fixed top-0 right-0 left-0 z-40 px-3 sm:px-5 lg:px-8 transition-all duration-300 bg-white/95 backdrop-blur-xl border-b border-gray-100/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between">
       
       {/* Left: Menu + Logo */}
-      <div className="flex items-center gap-2.5 sm:gap-4 flex-1 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
         <button 
           onClick={toggleSidebar} 
-          className="group p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 active:scale-95 transition-all"
+          className="group relative p-2 sm:p-2.5 rounded-xl hover:bg-gray-50 active:scale-95 transition-all"
           title="Abrir Menu"
         >
-          <Menu size={22} className="text-gray-500 group-hover:text-rm-green transition-colors" />
+          <div className="flex flex-col gap-[5px] w-[18px]">
+            <span className="block h-[2px] w-full bg-gray-400 rounded-full group-hover:bg-rm-green group-hover:w-full transition-all duration-300" />
+            <span className="block h-[2px] w-[70%] bg-gray-400 rounded-full group-hover:bg-rm-gold group-hover:w-full transition-all duration-300 delay-75" />
+            <span className="block h-[2px] w-[85%] bg-gray-400 rounded-full group-hover:bg-rm-green group-hover:w-full transition-all duration-300 delay-150" />
+          </div>
         </button>
 
-        <div className="flex items-center gap-2 select-none min-w-0">
-          <img 
-            src="https://receitasmilionarias.com.br/static/images/logo.png" 
-            alt="Logo" 
-            className="h-8 w-8 sm:h-9 sm:w-9 object-contain shrink-0"
-          />
+        <div className="flex items-center gap-2 select-none min-w-0 cursor-pointer group" onClick={() => handleNavClick('dashboard')}>
+          <div className="relative">
+            <img 
+              src="https://receitasmilionarias.com.br/static/images/logo.png" 
+              alt="Logo" 
+              className="h-8 w-8 sm:h-9 sm:w-9 object-contain shrink-0 group-hover:scale-105 transition-transform"
+            />
+          </div>
           <div className="flex flex-col min-w-0">
             <span className="font-serif font-bold text-rm-green text-sm sm:text-base leading-none tracking-tight">Receitas</span>
             <span className="font-serif font-bold text-rm-gold text-sm sm:text-base leading-none tracking-tight">Milionárias</span>
@@ -137,7 +143,7 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
           <button
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
             className={`
-              relative p-2 sm:p-2.5 rounded-xl transition-all
+              relative p-2 sm:p-2.5 rounded-xl transition-all active:scale-95
               ${isNotificationsOpen 
                 ? 'bg-gray-100 text-rm-green' 
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}
@@ -145,7 +151,7 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
           >
             <Bell size={20} />
             {unreadNotifications.length > 0 && (
-              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white shadow-sm">
+              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-gradient-to-r from-red-500 to-red-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white shadow-md shadow-red-500/30 animate-pulse">
                 {unreadNotifications.length > 9 ? '9+' : unreadNotifications.length}
               </span>
             )}
@@ -214,7 +220,7 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
         </div>
         
         {/* Divider */}
-        <div className="h-7 w-px bg-gray-200 mx-0.5 hidden sm:block" />
+        <div className="h-7 w-px bg-gradient-to-b from-transparent via-gray-200 to-transparent mx-0.5 hidden sm:block" />
         
         {/* Profile */}
         <div className="relative" ref={dropdownRef}>
@@ -233,7 +239,7 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
               </span>
             </div>
             
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-rm-green to-[#0f241e] p-[2px] shadow-md">
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-rm-green to-[#0f241e] p-[2px] shadow-md hover:shadow-lg transition-shadow">
               <div className="h-full w-full rounded-[10px] bg-white flex items-center justify-center overflow-hidden">
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
@@ -245,38 +251,70 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
             
             <ChevronDown 
               size={14} 
-              className={`text-gray-400 hidden sm:block transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} 
+              className={`text-gray-400 hidden sm:block transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} 
             />
           </button>
           
           {/* Dropdown */}
           {isProfileOpen && (
-            <div className="absolute right-0 top-full mt-2 w-60 bg-white rounded-2xl shadow-2xl border border-gray-100 animate-fade-in origin-top-right z-50 ring-1 ring-black/5 overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 animate-fade-in origin-top-right z-50 ring-1 ring-black/5 overflow-hidden">
               
-              {/* User info - visible on mobile */}
-              <div className="px-4 py-3.5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 sm:hidden">
-                <p className="text-sm font-bold text-gray-800">{user.name}</p>
-                <p className="text-[10px] text-gray-400">{user.email}</p>
+              {/* User info header */}
+              <div className="px-4 py-4 bg-gradient-to-r from-rm-green/5 via-gray-50 to-white border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-rm-green to-[#0f241e] p-[2px] shadow-md">
+                    <div className="h-full w-full rounded-[9px] bg-white flex items-center justify-center overflow-hidden">
+                      {user.avatarUrl ? (
+                        <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="font-serif font-bold text-rm-green text-sm">{user.name.charAt(0)}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-gray-800 truncate">{user.name}</p>
+                    <p className="text-[10px] text-gray-400 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <div className="mt-2.5 flex items-center gap-1.5">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${
+                    user.role === UserRole.ADMIN
+                      ? 'bg-rm-gold/10 text-rm-gold border border-rm-gold/20'
+                      : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                  }`}>
+                    {user.role === UserRole.ADMIN && <Crown size={8} />}
+                    {user.role === UserRole.ADMIN ? 'Produtor' : 'Afiliado'}
+                  </span>
+                </div>
               </div>
               
               <div className="p-1.5 space-y-0.5">
                 <button 
                   onClick={() => handleNavClick('settings')}
-                  className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-2.5"
+                  className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-all flex items-center gap-2.5 group"
                 >
-                  <UserIcon size={16} /> Meu Perfil
+                  <div className="p-1.5 rounded-lg bg-gray-50 group-hover:bg-rm-green/10 transition-colors">
+                    <UserIcon size={14} className="group-hover:text-rm-green transition-colors" />
+                  </div>
+                  Meu Perfil
                 </button>
                 <button 
                   onClick={() => handleNavClick('settings')}
-                  className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-2.5"
+                  className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-all flex items-center gap-2.5 group"
                 >
-                  <Settings size={16} /> Configurações
+                  <div className="p-1.5 rounded-lg bg-gray-50 group-hover:bg-rm-green/10 transition-colors">
+                    <Settings size={14} className="group-hover:text-rm-green transition-colors" />
+                  </div>
+                  Configurações
                 </button>
                 <button 
                   onClick={() => handleNavClick('settings')}
-                  className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-2.5"
+                  className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-all flex items-center gap-2.5 group"
                 >
-                  <HelpCircle size={16} /> Ajuda & Suporte
+                  <div className="p-1.5 rounded-lg bg-gray-50 group-hover:bg-rm-green/10 transition-colors">
+                    <HelpCircle size={14} className="group-hover:text-rm-green transition-colors" />
+                  </div>
+                  Ajuda & Suporte
                 </button>
               </div>
               
@@ -285,9 +323,11 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
               <div className="p-1.5">
                 <button 
                   onClick={onLogout} 
-                  className="w-full text-left px-3.5 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2.5 transition-colors group"
+                  className="w-full text-left px-3.5 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2.5 transition-all group"
                 >
-                  <LogOut size={16} className="group-hover:-translate-x-0.5 transition-transform" /> 
+                  <div className="p-1.5 rounded-lg bg-red-50 group-hover:bg-red-100 transition-colors">
+                    <LogOut size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+                  </div>
                   Sair do Sistema
                 </button>
               </div>

@@ -264,7 +264,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
               </a>
               
               <button 
-                onClick={() => handleItemClick('settings')}
+                onClick={() => handleItemClick('help')}
                 style={{
                   opacity: animateItems ? 1 : 0,
                   transform: animateItems ? 'translateX(0)' : 'translateX(-16px)',

@@ -299,16 +299,7 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
                   Meu Perfil
                 </button>
                 <button 
-                  onClick={() => handleNavClick('settings')}
-                  className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-all flex items-center gap-2.5 group"
-                >
-                  <div className="p-1.5 rounded-lg bg-gray-50 group-hover:bg-rm-green/10 transition-colors">
-                    <Settings size={14} className="group-hover:text-rm-green transition-colors" />
-                  </div>
-                  Configurações
-                </button>
-                <button 
-                  onClick={() => handleNavClick('settings')}
+                  onClick={() => handleNavClick('help')}
                   className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-all flex items-center gap-2.5 group"
                 >
                   <div className="p-1.5 rounded-lg bg-gray-50 group-hover:bg-rm-green/10 transition-colors">

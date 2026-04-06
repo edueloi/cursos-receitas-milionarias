@@ -15,6 +15,7 @@ import SignaturePage from './pages/SignaturePage';
 import PlayerPage from './pages/PlayerPage';
 import SettingsPage from './pages/SettingsPage';
 import AffiliatesPage from './pages/AffiliatesPage';
+import HelpPage from './pages/HelpPage';
 
 // Instructor Pages
 import InstructorDashboardPage from './pages/InstructorDashboardPage';
@@ -225,7 +226,8 @@ function App() {
     'instructor-courses': '/gerenciar-cursos',
     'create-course': '/criar-curso',
     affiliates: '/afiliados',
-    signature: '/assinatura'
+    signature: '/assinatura',
+    help: '/ajuda'
   };
 
   const tabFromPath = (pathname: string) => {
@@ -239,6 +241,7 @@ function App() {
     if (pathname.startsWith('/produtor')) return 'instructor';
     if (pathname.startsWith('/afiliados')) return 'affiliates';
     if (pathname.startsWith('/assinatura')) return 'signature';
+    if (pathname.startsWith('/ajuda')) return 'help';
     return 'dashboard';
   };
 
@@ -736,6 +739,7 @@ function App() {
           } />
           <Route path="/assinatura" element={<SignaturePage user={user} onShowToast={addToast} />} />
           <Route path="/afiliados" element={isProducer ? <AffiliatesPage /> : <Navigate to="/painel" replace />} />
+          <Route path="/ajuda" element={<HelpPage />} />
           <Route path="*" element={<div className="p-10 text-center">Pagina nao encontrada.</div>} />
         </Routes>
       </main>

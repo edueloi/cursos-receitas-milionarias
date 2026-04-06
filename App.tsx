@@ -496,10 +496,10 @@ function App() {
         <ToastContainer toasts={toasts} removeToast={removeToast} />
         
         {/* Left Side (Desktop Only) - Image & Branding */}
-        <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 overflow-hidden border-r-4 border-rm-gold bg-[#1C3B32]">
+        <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 overflow-hidden border-r border-[#1a3a2f] bg-[#0A1A14]">
            {/* Background Image */}
            <div 
-             className="absolute inset-0 bg-cover bg-center z-0 opacity-40 scale-105"
+             className="absolute inset-0 bg-cover bg-center z-0 scale-105 opacity-80"
              style={{ 
                backgroundImage: 'url("https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2070&auto=format&fit=crop")',
              }}
@@ -517,8 +517,8 @@ function App() {
            </div>
 
            <div className="relative z-20 text-white max-w-lg space-y-6">
-             <h2 className="text-5xl font-serif font-bold leading-tight">
-               Transforme suas <span className="text-rm-gold">Receitas</span> em um Império.
+             <h2 className="text-5xl font-serif font-bold leading-tight drop-shadow-md">
+               Transforme suas <span className="text-rm-gold drop-shadow-md relative inline-block">Receitas</span> em um Império.
              </h2>
              <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -553,7 +553,7 @@ function App() {
             </div>
 
             {/* Login Card */}
-            <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 w-full animate-fade-in-up border-t-8 lg:border-t-0 border-rm-gold lg:border-none">
+            <div className="bg-white/95 lg:bg-white backdrop-blur-xl rounded-[2rem] shadow-2xl p-8 lg:p-12 w-full animate-fade-in-up border border-gray-100 lg:border-none relative z-10">
               
               <div className="text-center mb-8 hidden lg:block">
                 <h3 className="text-2xl font-serif font-bold text-rm-green">Receitas Milionárias</h3>
@@ -575,7 +575,7 @@ function App() {
                         type="email" 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-4 focus:ring-rm-gold/10 outline-none transition-all text-base font-medium text-gray-800 placeholder-gray-400"
+                        className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-2 focus:ring-rm-gold/10 outline-none transition-all text-sm font-medium text-gray-800 placeholder-gray-400"
                         placeholder="seu@email.com"
                         required
                       />
@@ -590,7 +590,7 @@ function App() {
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-12 pr-12 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-4 focus:ring-rm-gold/10 outline-none transition-all text-base font-medium text-gray-800 placeholder-gray-400"
+                        className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-2 focus:ring-rm-gold/10 outline-none transition-all text-sm font-medium text-gray-800 placeholder-gray-400"
                         placeholder="••••••••"
                         required
                       />
@@ -625,7 +625,7 @@ function App() {
                     type="submit"
                     variant="secondary" 
                     isLoading={isLoading}
-                    className="w-full py-4 text-base font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all group mt-4 rounded-xl"
+                    className="w-full py-4 text-base font-bold shadow-lg shadow-rm-gold/30 hover:shadow-[0_8px_25px_rgba(201,166,53,0.4)] hover:-translate-y-0.5 transition-all group mt-4 rounded-xl bg-gradient-to-r from-rm-gold to-[#d4af37] text-white border-0"
                  >
                     {isLoading ? 'Entrando...' : 'Entrar no Sistema'} {!isLoading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform ml-1" />}
                  </Button>

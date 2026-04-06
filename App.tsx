@@ -126,7 +126,9 @@ function App() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(() => {
+    return !!(localStorage.getItem('rm_token') || sessionStorage.getItem('rm_token'));
+  });
   const [postLoginPath, setPostLoginPath] = useState<string | null>(null);
   const [myCourseIds, setMyCourseIds] = useState<string[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);

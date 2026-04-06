@@ -53,6 +53,38 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
 
+  // --- Functions Defined EARLY to avoid reference errors ---
+  const tabFromPath = (pathname: string) => {
+    if (pathname.startsWith('/painel') || pathname === '/') return 'dashboard';
+    if (pathname.startsWith('/cursos')) return 'courses';
+    if (pathname.startsWith('/meus-cursos')) return 'my-courses';
+    if (pathname.startsWith('/certificados')) return 'certificates';
+    if (pathname.startsWith('/perfil')) return 'settings';
+    if (pathname.startsWith('/gerenciar-cursos')) return 'instructor-courses';
+    if (pathname.startsWith('/criar-curso')) return 'create-course';
+    if (pathname.startsWith('/produtor')) return 'instructor';
+    if (pathname.startsWith('/assinatura')) return 'signature';
+    if (pathname.startsWith('/ajuda')) return 'help';
+    return 'dashboard';
+  };
+
+  const pathFromTab: Record<string, string> = {
+    dashboard: '/painel',
+    courses: '/cursos',
+    'my-courses': '/meus-cursos',
+    certificates: '/certificados',
+    settings: '/perfil',
+    instructor: '/produtor',
+    'instructor-courses': '/gerenciar-cursos',
+    'create-course': '/criar-curso',
+    signature: '/assinatura',
+    help: '/ajuda'
+  };
+
+  const activeTab = tabFromPath(location.pathname);
+  const isProducer = user?.role !== UserRole.AFFILIATE;
+
+  // --- PWA Initialization ---
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
     const handleBeforePrompt = (e: any) => {
@@ -74,6 +106,7 @@ function App() {
     }
   };
 
+  // --- State Management ---
   useEffect(() => {
     const checkSession = async () => {
       const storedToken = localStorage.getItem('rm_token') || sessionStorage.getItem('rm_token');
@@ -98,55 +131,34 @@ function App() {
     if (storedRemember === 'true') setRememberMe(true);
   }, []);
 
+  const refreshCourses = async () => {
+    try {
+      const data = await api.getCourses();
+      setCourses(data);
+    } catch (e) {}
+  };
+
+  const refreshLists = async () => {
+    if (!user?.email) return;
+    try {
+      const lists = await api.getUserLists(user.email);
+      setMyCourseIds(lists.meusCursos);
+      setFavoriteIds(lists.favoritos);
+      const progress = await api.getUserProgress(user.email);
+      setProgressMap(progress);
+      const certs = await api.getUserCertificates(user.email);
+      setCertificateMap(certs);
+    } catch (e) {}
+  };
+
   useEffect(() => {
     if (user) {
-      const refresh = async () => {
-        try {
-          const data = await api.getCourses();
-          setCourses(data);
-          const lists = await api.getUserLists(user.email);
-          setMyCourseIds(lists.meusCursos);
-          setFavoriteIds(lists.favoritos);
-          const progress = await api.getUserProgress(user.email);
-          setProgressMap(progress);
-          const certificates = await api.getUserCertificates(user.email);
-          setCertificateMap(certificates);
-        } catch (e) {}
-      };
-      refresh();
+      refreshCourses();
+      refreshLists();
     }
   }, [user]);
 
-  const pathFromTab: Record<string, string> = {
-    dashboard: '/painel',
-    courses: '/cursos',
-    'my-courses': '/meus-cursos',
-    certificates: '/certificados',
-    settings: '/perfil',
-    instructor: '/produtor',
-    'instructor-courses': '/gerenciar-cursos',
-    'create-course': '/criar-curso',
-    signature: '/assinatura',
-    help: '/ajuda'
-  };
-
-  const tabFromPath = (pathname: string) => {
-    if (pathname.startsWith('/painel') || pathname === '/') return 'dashboard';
-    if (pathname.startsWith('/cursos')) return 'courses';
-    if (pathname.startsWith('/meus-cursos')) return 'my-courses';
-    if (pathname.startsWith('/certificados')) return 'certificates';
-    if (pathname.startsWith('/perfil')) return 'settings';
-    if (pathname.startsWith('/gerenciar-cursos')) return 'instructor-courses';
-    if (pathname.startsWith('/criar-curso')) return 'create-course';
-    if (pathname.startsWith('/produtor')) return 'instructor';
-    if (pathname.startsWith('/assinatura')) return 'signature';
-    if (pathname.startsWith('/ajuda')) return 'help';
-    return 'dashboard';
-  };
-
-  const activeTab = tabFromPath(location.pathname);
-  const isProducer = user?.role !== UserRole.AFFILIATE;
-
+  // --- Navigation & Handlers ---
   const navigateTo = (tab: string) => {
     const path = pathFromTab[tab] || '/painel';
     navigate(path);
@@ -163,10 +175,8 @@ function App() {
         const token = authData.token;
         if (rememberMe) {
           localStorage.setItem('rm_token', token);
-          sessionStorage.removeItem('rm_token');
         } else {
           sessionStorage.setItem('rm_token', token);
-          localStorage.removeItem('rm_token');
         }
         localStorage.setItem('rm_remember', rememberMe ? 'true' : 'false');
         const userData = await api.getMe(token);
@@ -198,20 +208,6 @@ function App() {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  const coursesWithProgress = courses.map(course => {
-    const completed = new Set(progressMap[course.id]?.completadas || []);
-    let total = 0; let done = 0;
-    const modules = course.modules.map(mod => ({
-      ...mod,
-      lessons: mod.lessons.map(lesson => {
-        total++;
-        if (completed.has(lesson.id)) done++;
-        return { ...lesson, completed: completed.has(lesson.id) };
-      })
-    }));
-    return { ...course, modules, progress: total > 0 ? Math.round((done / total) * 100) : 0 };
-  });
-
   const handleSaveCourse = (course: Course) => {
     setEditingCourse(null);
     refreshCourses();
@@ -232,9 +228,7 @@ function App() {
     try {
       await api.deleteCourse(course.id, user?.email || '');
       refreshCourses();
-    } catch (error: any) {
-      addToast('error', 'Falha ao excluir', error.message || 'Erro ao excluir curso.');
-    }
+    } catch (e) {}
   };
 
   const handleMarkLessonComplete = async (courseId: string, lessonId: string) => {
@@ -242,7 +236,7 @@ function App() {
     try {
       const progress = await api.updateProgress(user.email, courseId, lessonId, true);
       setProgressMap(prev => ({ ...prev, [courseId]: progress[courseId] }));
-    } catch (error) {}
+    } catch (e) {}
   };
 
   const handleAddToMyCourses = async (course: Course) => {
@@ -251,7 +245,7 @@ function App() {
       const updated = await api.updateMyCourses(user.email, course.id, 'add');
       setMyCourseIds(updated);
       addToast('success', 'Adicionado!', 'Curso adicionado aos seus cursos.');
-    } catch (error: any) {}
+    } catch (e) {}
   };
 
   const handleToggleFavorite = async (course: Course) => {
@@ -260,19 +254,26 @@ function App() {
     try {
       const updated = await api.updateFavorites(user.email, course.id, isFav ? 'remove' : 'add');
       setFavoriteIds(updated);
-    } catch (error: any) {}
+    } catch (e) {}
   };
 
   const handleSelectCourse = (course: Course) => {
     navigate(`/curso/${course.id}`);
   };
 
-  const refreshCourses = async () => {
-    try {
-      const data = await api.getCourses();
-      setCourses(data);
-    } catch (error) {}
-  };
+  const coursesWithProgress = courses.map(course => {
+    const completed = new Set(progressMap[course.id]?.completadas || []);
+    let total = 0; let done = 0;
+    const modules = course.modules.map(mod => ({
+      ...mod,
+      lessons: mod.lessons.map(lesson => {
+        total++;
+        if (completed.has(lesson.id)) done++;
+        return { ...lesson, completed: completed.has(lesson.id) };
+      })
+    }));
+    return { ...course, modules, progress: total > 0 ? Math.round((done / total) * 100) : 0 };
+  });
 
   const loginScreen = (
     <div className="min-h-screen w-full flex font-sans overflow-hidden bg-[#0A1A14] relative">
@@ -354,13 +355,14 @@ function App() {
              )}
           </div>
         </div>
-        <p className="mt-8 text-white/30 text-[10px] font-medium tracking-widest uppercase">&copy; 2025 Receitas Milionárias Academy</p>
+        <p className="mt-8 text-white/30 text-[10px] font-medium tracking-widest uppercase tracking-[0.2em]">&copy; 2025 Receitas Milionárias Academy</p>
       </div>
     </div>
   );
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#1C3B32]"><div className="animate-spin rounded-full h-12 w-12 border-4 border-white/10 border-t-rm-gold"></div></div>;
   if (!user) return <Routes><Route path="/login" element={loginScreen} /><Route path="*" element={<Navigate to="/login" replace />} /></Routes>;
+  
   if (location.pathname.startsWith('/curso/')) {
     const courseId = location.pathname.split('/')[2];
     const course = coursesWithProgress.find(c => c.id === courseId);

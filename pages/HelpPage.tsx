@@ -360,7 +360,7 @@ const HelpPage: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-5">
             <a
-              href="https://wa.me/5500000000000"
+              href="https://wa.me/5515997575655"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20"
@@ -369,10 +369,10 @@ const HelpPage: React.FC = () => {
               WhatsApp
             </a>
             <a
-              href="mailto:suporte@receitasmilionarias.com.br"
+              href="mailto:conta@receitasmilionarias.com.br"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors border border-gray-200"
             >
-              suporte@receitasmilionarias.com.br
+              conta@receitasmilionarias.com.br
             </a>
           </div>
         </div>

@@ -25,16 +25,7 @@ import AdminCourseCreate from './pages/AdminCourseCreate';
 // Components
 import Button from './components/ui/Button';
 import ToastContainer, { ToastMessage } from './components/ui/Toast';
-import { ExternalLink, Eye, EyeOff, Lock, Mail, ArrowRight, CheckCircle, Zap } from 'lucide-react';
-
-/*
-// Initial Mock Data with Requested YouTube Video
-const YOUTUBE_VIDEO_URL = "https://www.youtube.com/embed/_tnDpt9jSWM";
-
-const INITIAL_COURSES: Course[] = [
-  ... (kept for reference if needed, but using live api)
-];
-*/
+import { ExternalLink, Eye, EyeOff, Lock, Mail, ArrowRight, CheckCircle, Zap, ShieldCheck } from 'lucide-react';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -85,7 +76,6 @@ function App() {
 
     window.addEventListener('beforeinstallprompt', handleBeforePrompt);
     
-    // Also hide button if user goes to desktop mode (resizes window)
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
         setShowInstallBtn(false);
@@ -120,7 +110,6 @@ function App() {
         try {
           const userData = await api.getMe(storedToken);
           setUser(userData);
-          // Only show toast if it's a fresh load, not necessary but nice
         } catch (error) {
           console.error("Session expired", error);
           localStorage.removeItem('rm_token');
@@ -227,13 +216,10 @@ function App() {
     setIsLoading(true);
     
     try {
-      // 1. Authenticate
       const authData = await api.login(email, password);
       
       if (authData.token) {
         const token = authData.token;
-        
-        // 2. Persist Token based on "Remember Me"
         if (rememberMe) {
           localStorage.setItem('rm_token', token);
           sessionStorage.removeItem('rm_token');
@@ -242,10 +228,7 @@ function App() {
           localStorage.removeItem('rm_token');
         }
         localStorage.setItem('rm_remember', rememberMe ? 'true' : 'false');
-
-        // 3. Fetch User Profile
         const userData = await api.getMe(token);
-        
         setUser(userData);
         api.upsertUserProfile(userData.email, userData.name).catch(() => {});
         addToast('success', 'Login realizado com sucesso!', `Bem-vindo, ${userData.name.split(' ')[0]}.`);
@@ -272,20 +255,17 @@ function App() {
     navigate('/login');
   };
 
-  // Navigation Logic
   const navigateTo = (tab: string) => {
     const path = pathFromTab[tab] || '/painel';
     navigate(path);
     if (tab !== 'create-course') {
        setEditingCourse(null);
     }
-    // Close sidebar on mobile when navigating
     if (window.innerWidth < 1024) {
       setIsSidebarOpen(false);
     }
   };
 
-  // Course Management Handlers
   const handleSaveCourse = (course: Course) => {
     if (editingCourse) {
       setEditingCourse(null);
@@ -294,7 +274,6 @@ function App() {
       addToast('success', 'Curso Criado!', 'Seu novo curso foi salvo como rascunho.');
     }
     refreshCourses();
-    // Return to appropriate list based on role
     navigate(user?.role === UserRole.ADMIN ? '/gerenciar-cursos' : '/cursos');
   };
 
@@ -453,189 +432,178 @@ function App() {
     );
   };
 
-  // 1. Login Screen (New Premium Design - Mobile First)
+  // 1. New PREMIUM Login Screen - Optimized for Mobile
   const loginScreen = (
-      <div className="min-h-screen w-full flex font-sans overflow-hidden">
+      <div className="min-h-screen w-full flex font-sans overflow-hidden bg-[#0a1a14] relative">
         <ToastContainer toasts={toasts} removeToast={removeToast} />
         
-        {/* Left Side (Desktop Only) - Image & Branding */}
-        <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 overflow-hidden border-r border-[#1a3a2f] bg-[#0A1A14]">
-           {/* Background Image */}
-           <div 
-             className="absolute inset-0 bg-cover bg-center z-0 scale-105 opacity-80"
-             style={{ 
-               backgroundImage: 'url("https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2070&auto=format&fit=crop")',
-             }}
-           ></div>
-           
-           {/* Content */}
-           <div className="relative z-20">
-             <div className="flex items-center gap-3 select-none mb-8">
-               <div className="bg-white p-2.5 rounded-xl shadow-lg flex items-center justify-center w-14 h-14">
+        {/* Full Page Background Image (Works on Mobile and Desktop) */}
+        <div 
+           className="absolute inset-0 bg-cover bg-center z-0 transition-transform duration-1000 scale-105"
+           style={{ 
+             backgroundImage: 'url("https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2070&auto=format&fit=crop")',
+           }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-tr from-[#1C3B32]/95 via-[#1C3B32]/80 to-transparent lg:from-[#1C3B32]/100 lg:via-[#1C3B32]/40 lg:to-transparent"></div>
+        </div>
+
+        {/* Content Wrapper */}
+        <div className="relative z-10 w-full flex flex-col lg:flex-row h-full min-h-screen">
+          
+          {/* Left Side: Desktop Branding Title */}
+          <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-16 space-y-10">
+             <div className="flex items-center gap-4">
+               <div className="bg-white p-3 rounded-2xl shadow-2xl flex items-center justify-center w-16 h-16 transform hover:rotate-3 transition-transform">
                   <img src="https://receitasmilionarias.com.br/static/images/logo-academy.png" alt="Logo" className="h-full w-full object-contain" />
                </div>
                <div className="flex flex-col">
-                 <span className="font-serif font-bold text-white text-3xl leading-none tracking-wide">Receitas</span>
-                 <span className="font-serif font-bold text-rm-gold text-3xl leading-none tracking-wide">Milionárias</span>
+                 <span className="font-serif font-bold text-white text-4xl leading-none">Receitas</span>
+                 <span className="font-serif font-bold text-rm-gold text-4xl leading-none">Milionárias</span>
                </div>
              </div>
-           </div>
 
-           <div className="relative z-20 text-white max-w-lg space-y-6">
-             <h2 className="text-5xl font-serif font-bold leading-tight drop-shadow-md">
-               Transforme suas <span className="text-rm-gold drop-shadow-md relative inline-block">Receitas</span> em um Império.
-             </h2>
-             <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="text-rm-gold mt-1" size={20} />
-                  <p className="text-lg opacity-90 font-light">Acesso exclusivo à Academy para afiliados.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="text-rm-gold mt-1" size={20} />
-                  <p className="text-lg opacity-90 font-light">Painel Afiliado e materiais inclusos.</p>
-                </div>
+             <div className="max-w-xl">
+               <h2 className="text-6xl font-serif font-bold text-white leading-tight">
+                 A <span className="text-rm-gold">Academy</span> definitiva para produtores.
+               </h2>
+               <p className="text-xl text-white/70 mt-6 font-light leading-relaxed">
+                 Transforme seu conhecimento em um império de vendas com as melhores estratégias e materiais exclusivos.
+               </p>
              </div>
-           </div>
+             
+             <div className="flex items-center gap-6 pt-4">
+               <div className="flex -space-x-3">
+                 {[1,2,3,4].map(i => (
+                    <div key={i} className={`w-12 h-12 rounded-full border-2 border-[#1C3B32] bg-gray-200 overflow-hidden`}>
+                      <img src={`https://i.pravatar.cc/150?u=${i+10}`} alt="user" />
+                    </div>
+                 ))}
+                 <div className="w-12 h-12 rounded-full border-2 border-[#1C3B32] bg-rm-gold flex items-center justify-center text-xs font-bold text-white">
+                   +2k
+                 </div>
+               </div>
+               <p className="text-sm font-medium text-white/60">Afiliados já faturando na Academy</p>
+             </div>
+          </div>
 
-           <div className="relative z-20 text-xs text-white/50">
-             © 2025 Receitas Milionárias Academy. Todos os direitos reservados.
-           </div>
-        </div>
-
-        {/* Right Side / Mobile Full Screen - Login Form */}
-        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen bg-[#1C3B32] lg:bg-[#F8F9FA] relative">
-          
-          {/* Mobile Decor (Background Gradient) */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1C3B32] to-[#0f241e] lg:hidden z-0"></div>
-          
-          <div className="w-full max-w-md z-10 px-6 py-8 flex flex-col h-full lg:h-auto justify-center">
+          {/* Right Side: Login Form (Optimized for Mobile) */}
+          <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 sm:p-12 relative">
             
-            {/* Logo centered above card on Mobile */}
-            <div className="lg:hidden flex flex-col items-center mb-8 animate-fade-in">
-                 <div className="bg-white p-3.5 rounded-2xl shadow-xl mb-4 flex items-center justify-center w-24 h-24">
+            {/* Mobile Header Branding */}
+            <div className="lg:hidden flex flex-col items-center mb-10 w-full animate-fade-in">
+               <div className="relative">
+                 <div className="absolute inset-0 bg-rm-gold/20 blur-2xl rounded-full scale-150 animate-pulse"></div>
+                 <div className="bg-white p-4 rounded-3xl shadow-2xl relative z-10 w-24 h-24 flex items-center justify-center overflow-hidden border-2 border-white/50">
                     <img 
                       src="https://receitasmilionarias.com.br/static/images/logo-academy.png" 
                       alt="Academy Logo" 
                       className="h-full w-full object-contain"
-                      onError={(e) => {
-                        (e.target as any).src = 'https://receitasmilionarias.com.br/static/images/logo.png';
-                      }}
                     />
                  </div>
-                 <h1 className="font-serif font-bold text-3xl text-white tracking-wide">Receitas <span className="text-rm-gold">Milionárias</span></h1>
-                 <p className="text-white/70 text-sm mt-1 uppercase tracking-widest font-medium">Academy</p>
+               </div>
+               <h1 className="mt-5 font-serif font-bold text-4xl text-white tracking-tight drop-shadow-xl">
+                 Academy
+               </h1>
             </div>
 
-            {/* Login Card */}
-            <div className="bg-white/95 lg:bg-white backdrop-blur-xl rounded-[2rem] shadow-2xl p-8 lg:p-12 w-full animate-fade-in-up border border-gray-100 lg:border-none relative z-10">
+            {/* Login Card: Glassmorphism Design */}
+            <div className="w-full max-w-[440px] bg-white/10 lg:bg-white/95 backdrop-blur-2xl lg:backdrop-blur-none rounded-[2.5rem] border border-white/20 lg:border-none shadow-[0_25px_80px_rgba(0,0,0,0.4)] p-8 lg:p-12 animate-fade-in-up">
               
-              <div className="text-center mb-8 hidden lg:block">
-                <h3 className="text-2xl font-serif font-bold text-rm-green">Receitas Milionárias</h3>
-                <p className="text-gray-500 text-sm mt-2 font-medium tracking-wide">Academy</p>
+              <div className="text-center mb-10">
+                <h3 className="text-2xl lg:text-3xl font-serif font-bold text-white lg:text-gray-900">Portal do Membro</h3>
+                <p className="text-white/60 lg:text-gray-500 text-sm mt-3 font-medium">Acesse sua conta para continuar</p>
               </div>
 
-              {/* Mobile Title inside card */}
-              <div className="text-center mb-6 lg:hidden">
-                 <h3 className="text-xl font-bold text-gray-800">Bem-vindo de volta!</h3>
-                 <p className="text-gray-500 text-xs mt-1">Insira seus dados para acessar.</p>
-              </div>
-
-              <form onSubmit={handleLogin} className="space-y-5">
-                 <div className="space-y-1.5">
-                   <label className="text-xs font-bold text-gray-600 uppercase tracking-wider ml-1">E-mail</label>
-                   <div className="relative group">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-rm-gold transition-colors" size={20} />
+              <form onSubmit={handleLogin} className="space-y-6">
+                 <div className="space-y-2">
+                   <div className="group relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 lg:text-gray-400 group-focus-within:text-rm-gold transition-colors">
+                        <Mail size={22} />
+                      </div>
                       <input 
                         type="email" 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-2 focus:ring-rm-gold/10 outline-none transition-all text-sm font-medium text-gray-800 placeholder-gray-400"
-                        placeholder="seu@email.com"
+                        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/10 lg:bg-gray-50 border border-white/10 lg:border-gray-200 focus:bg-white/20 lg:focus:bg-white text-white lg:text-gray-800 outline-none transition-all placeholder-white/30 lg:placeholder-gray-400 font-medium"
+                        placeholder="Seu e-mail"
                         required
                       />
                    </div>
                  </div>
 
-                 <div className="space-y-1.5">
-                   <label className="text-xs font-bold text-gray-600 uppercase tracking-wider ml-1">Senha</label>
-                   <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-rm-gold transition-colors" size={20} />
+                 <div className="space-y-2">
+                   <div className="group relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 lg:text-gray-400 group-focus-within:text-rm-gold transition-colors">
+                        <Lock size={22} />
+                      </div>
                       <input 
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-2 focus:ring-rm-gold/10 outline-none transition-all text-sm font-medium text-gray-800 placeholder-gray-400"
-                        placeholder="••••••••"
+                        className="w-full pl-12 pr-12 py-4 rounded-2xl bg-white/10 lg:bg-gray-50 border border-white/10 lg:border-gray-200 focus:bg-white/20 lg:focus:bg-white text-white lg:text-gray-800 outline-none transition-all placeholder-white/30 lg:placeholder-gray-400 font-medium"
+                        placeholder="Sua senha"
                         required
                       />
                       <button 
                         type="button" 
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rm-green p-1"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 lg:text-gray-400 hover:text-rm-gold transition-colors"
                       >
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
                    </div>
                  </div>
 
-                 <div className="flex items-center justify-between text-sm pt-2">
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-rm-green py-2 select-none">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 rounded text-rm-green focus:ring-rm-gold border-gray-300 cursor-pointer" 
-                        checked={rememberMe}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setRememberMe(checked);
-                          localStorage.setItem('rm_remember', checked ? 'true' : 'false');
-                        }}
-                      />
-                      <span>Lembrar-me</span>
+                 <div className="flex items-center justify-between py-1">
+                    <label className="flex items-center gap-3 cursor-pointer group px-1">
+                      <div className="relative flex items-center justify-center">
+                        <input 
+                          type="checkbox" 
+                          className="peer appearance-none w-5 h-5 rounded-md border-2 border-white/30 lg:border-gray-300 checked:bg-rm-gold checked:border-rm-gold transition-all cursor-pointer" 
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                        />
+                        <ShieldCheck className="absolute text-white scale-0 peer-checked:scale-100 transition-transform pointer-events-none" size={14} />
+                      </div>
+                      <span className="text-sm font-medium text-white/70 lg:text-gray-600 select-none">Manter logado</span>
                     </label>
-                    <a href="#" className="text-rm-gold hover:underline font-bold text-sm">Esqueceu a senha?</a>
+                    <a href="#" className="text-sm font-bold text-rm-gold hover:text-rm-gold/80 transition-colors">Esqueceu a senha?</a>
                  </div>
 
                  <Button 
                     type="submit"
                     variant="secondary" 
                     isLoading={isLoading}
-                    className="w-full py-4 text-base font-bold shadow-lg shadow-rm-gold/30 hover:shadow-[0_8px_25px_rgba(201,166,53,0.4)] hover:-translate-y-0.5 transition-all group mt-4 rounded-xl bg-gradient-to-r from-rm-gold to-[#d4af37] text-white border-0"
+                    className="w-full py-4.5 rounded-2xl text-base font-bold shadow-2xl hover:shadow-rm-gold/40 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-rm-gold via-yellow-500 to-rm-gold bg-[length:200%_100%] animate-gradient border-0 text-white"
                  >
-                    {isLoading ? 'Entrando...' : 'Entrar no Sistema'} {!isLoading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform ml-1" />}
+                    {isLoading ? 'Autenticando...' : 'Entrar no Sistema'}
+                    {!isLoading && <ArrowRight size={20} className="ml-1" />}
                  </Button>
               </form>
 
-              <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-                 <p className="text-sm text-gray-500 mb-6">
-                   Ainda não tem conta? <a href="https://receitasmilionarias.com.br/cadastro.html" target="_blank" className="text-rm-green font-bold hover:text-rm-gold transition-colors">Cadastre-se</a>
+              <div className="mt-8 pt-8 border-t border-white/10 lg:border-gray-100">
+                 <p className="text-center text-sm font-medium text-white/60 lg:text-gray-500 mb-6">
+                   Novo por aqui? <a href="https://receitasmilionarias.com.br/cadastro.html" target="_blank" className="font-bold text-rm-gold hover:underline">Crie sua conta</a>
                  </p>
                  
-                 <div className="flex flex-col gap-3 items-center">
-                   <a 
-                     href="https://dashboard.receitasmilionarias.com.br/" 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-rm-green transition-colors text-xs font-medium border border-gray-200"
-                   >
-                     <ExternalLink size={14} /> Ir para Painel Afiliado
-                   </a>
-
-                   {/* Install Prompt Button - Only visible on Mobile and if not installed */}
-                   {showInstallBtn && (
+                 {/* Install App Button (Mobile Only) */}
+                 {showInstallBtn && (
+                   <div className="px-2">
                      <button 
                        onClick={handleInstallApp}
-                       className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 transition-all text-xs font-bold border border-emerald-500/20 animate-fade-in"
+                       className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl bg-emerald-500/20 text-emerald-400 lg:text-emerald-600 border border-emerald-400/30 font-bold text-sm tracking-wide group transition-all hover:bg-emerald-500/30 active:scale-95"
                      >
-                       <Zap size={14} className="animate-pulse" /> Instalar Aplicativo Academy
+                       <Zap size={18} className="fill-emerald-400 animate-pulse" />
+                       Instalar Aplicativo Oficial
                      </button>
-                   )}
-                 </div>
+                   </div>
+                 )}
               </div>
             </div>
             
-            {/* Mobile Footer */}
-            <div className="lg:hidden mt-8 text-center text-white/40 text-[10px] font-medium">
-               &copy; 2025 Receitas Milionárias Academy
+            {/* Desktop Footer Only */}
+            <div className="absolute bottom-8 left-0 right-0 hidden lg:block text-center text-white/30 text-xs font-medium">
+               &copy; 2025 Receitas Milionárias Academy • Protocolo de Segurança SSL
             </div>
 
           </div>
@@ -646,7 +614,10 @@ function App() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#1C3B32]">
-        <span className="text-white text-xl font-bold animate-pulse">Carregando...</span>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-rm-gold/30 border-t-rm-gold rounded-full animate-spin"></div>
+          <span className="text-white text-sm font-bold tracking-widest uppercase">Academy</span>
+        </div>
       </div>
     );
   }
@@ -675,7 +646,6 @@ function App() {
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
       
-      {/* Sidebar Drawer (Overlay) */}
       <Sidebar 
         isOpen={isSidebarOpen} 
         user={user} 
@@ -685,7 +655,6 @@ function App() {
         onLogout={handleLogout}
       />
 
-      {/* Main Content - Full Width */}
       <main className="flex-1 transition-all duration-300 mt-16 sm:mt-[68px] w-full max-w-full">
         <Routes>
           <Route path="/" element={<Navigate to="/painel" replace />} />

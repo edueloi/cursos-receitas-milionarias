@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, UserRole } from '../../types';
-import { Bell, LogOut, User as UserIcon, Menu, ChevronDown, Settings, HelpCircle, GraduationCap, MessageCircle, Award, BookOpen } from 'lucide-react';
+import { Bell, LogOut, User as UserIcon, Menu, ChevronDown, Settings, HelpCircle, GraduationCap, MessageCircle, Award, BookOpen, Crown } from 'lucide-react';
 import { api } from '../../services/api';
 
 interface HeaderProps {
@@ -19,7 +19,6 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -90,11 +89,11 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
   };
 
   const getNotificationStyle = (type: string) => {
-    if (type === 'new-student') return { icon: GraduationCap, color: 'bg-blue-50 text-blue-600' };
-    if (type === 'certificate') return { icon: Award, color: 'bg-rm-gold/20 text-rm-green' };
-    if (type === 'question' || type === 'answer') return { icon: MessageCircle, color: 'bg-purple-50 text-purple-600' };
-    if (type === 'new-course') return { icon: BookOpen, color: 'bg-green-50 text-green-600' };
-    return { icon: Bell, color: 'bg-gray-100 text-gray-500' };
+    if (type === 'new-student') return { icon: GraduationCap, color: 'bg-blue-50 text-blue-600', ring: 'ring-blue-100' };
+    if (type === 'certificate') return { icon: Award, color: 'bg-rm-gold/10 text-rm-gold', ring: 'ring-rm-gold/20' };
+    if (type === 'question' || type === 'answer') return { icon: MessageCircle, color: 'bg-purple-50 text-purple-600', ring: 'ring-purple-100' };
+    if (type === 'new-course') return { icon: BookOpen, color: 'bg-emerald-50 text-emerald-600', ring: 'ring-emerald-100' };
+    return { icon: Bell, color: 'bg-gray-100 text-gray-500', ring: 'ring-gray-200' };
   };
 
   const handleNavClick = (tab: string) => {
@@ -105,88 +104,109 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
   if (!user) return null;
 
   return (
-    <header className="h-20 fixed top-0 right-0 left-0 z-40 px-4 lg:px-8 transition-all duration-300 bg-white/90 backdrop-blur-md border-b border-gray-200/50 shadow-sm flex items-center justify-between">
+    <header className="h-16 sm:h-[68px] fixed top-0 right-0 left-0 z-40 px-3 sm:px-5 lg:px-8 transition-all duration-300 bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between">
       
-      {/* Left Section: Menu & Logo */}
-      <div className="flex items-center gap-4 lg:gap-6 flex-1">
+      {/* Left: Menu + Logo */}
+      <div className="flex items-center gap-2.5 sm:gap-4 flex-1 min-w-0">
         <button 
           onClick={toggleSidebar} 
-          className="group p-2.5 rounded-xl hover:bg-gray-100/80 active:bg-gray-200 transition-all duration-200 focus:outline-none"
+          className="group p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 active:scale-95 transition-all"
           title="Abrir Menu"
         >
-          <Menu size={26} className="text-gray-600 group-hover:text-rm-green transition-colors" />
+          <Menu size={22} className="text-gray-500 group-hover:text-rm-green transition-colors" />
         </button>
 
-        {/* Composed Logo (Light Theme) */}
-        <div className="flex items-center gap-2 select-none">
-           <img 
-             src="https://receitasmilionarias.com.br/static/images/logo.png" 
-             alt="Logo" 
-             className="h-9 w-9 object-contain"
-           />
-           <div className="flex flex-col">
-             <span className="font-serif font-bold text-rm-green text-lg leading-none tracking-tight">Receitas</span>
-             <span className="font-serif font-bold text-rm-gold text-lg leading-none tracking-tight">Milionárias</span>
-           </div>
+        <div className="flex items-center gap-2 select-none min-w-0">
+          <img 
+            src="https://receitasmilionarias.com.br/static/images/logo.png" 
+            alt="Logo" 
+            className="h-8 w-8 sm:h-9 sm:w-9 object-contain shrink-0"
+          />
+          <div className="flex flex-col min-w-0">
+            <span className="font-serif font-bold text-rm-green text-sm sm:text-base leading-none tracking-tight">Receitas</span>
+            <span className="font-serif font-bold text-rm-gold text-sm sm:text-base leading-none tracking-tight">Milionárias</span>
+          </div>
         </div>
       </div>
 
-      {/* Right Section: Actions & Profile */}
-      <div className="flex items-center gap-3 lg:gap-6">
+      {/* Right: Actions */}
+      <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 shrink-0">
         
-        {/* Notification Bell */}
+        {/* Notifications */}
         <div className="relative" ref={notificationsRef}>
           <button
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="relative p-2.5 text-gray-400 hover:text-rm-gold transition-colors hover:bg-gray-50 rounded-full group"
+            className={`
+              relative p-2 sm:p-2.5 rounded-xl transition-all
+              ${isNotificationsOpen 
+                ? 'bg-gray-100 text-rm-green' 
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}
+            `}
           >
-            <Bell size={22} />
+            <Bell size={20} />
             {unreadNotifications.length > 0 && (
-              <span className="absolute top-2 right-2.5 h-2 w-2 bg-red-500 rounded-full border border-white group-hover:scale-110 transition-transform"></span>
+              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white shadow-sm">
+                {unreadNotifications.length > 9 ? '9+' : unreadNotifications.length}
+              </span>
             )}
           </button>
+
           {isNotificationsOpen && (
-            <div className="absolute right-0 top-full mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 animate-fade-in origin-top-right z-50 ring-1 ring-black/5">
-              <div className="px-4 pb-3 border-b border-gray-100 flex items-center justify-between">
+            <div className="absolute right-0 sm:right-0 top-full mt-2 w-[calc(100vw-24px)] sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 animate-fade-in origin-top-right z-50 ring-1 ring-black/5 max-h-[80vh] flex flex-col" style={{ right: 'max(-12px, calc(-50vw + 50%))' }}>
+              {/* Notification Header */}
+              <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between shrink-0">
                 <div>
                   <p className="text-sm font-bold text-gray-800">Notificações</p>
-                  <p className="text-xs text-gray-400">Últimas atualizações</p>
+                  <p className="text-[10px] text-gray-400">
+                    {unreadNotifications.length > 0 ? `${unreadNotifications.length} nova${unreadNotifications.length > 1 ? 's' : ''}` : 'Tudo em dia'}
+                  </p>
                 </div>
                 {unreadNotifications.length > 0 && (
-                  <button
-                    onClick={clearAllNotifications}
-                    className="text-xs font-bold text-rm-gold hover:underline"
-                  >
+                  <button onClick={clearAllNotifications} className="text-[10px] font-bold text-rm-green bg-rm-green/5 px-2.5 py-1 rounded-full hover:bg-rm-green/10 transition-colors">
                     Limpar tudo
                   </button>
                 )}
               </div>
-              <div className="max-h-80 overflow-y-auto">
+
+              {/* Notification List */}
+              <div className="overflow-y-auto flex-1">
                 {isLoadingNotifications ? (
-                  <div className="px-4 py-6 text-sm text-gray-500">Carregando...</div>
+                  <div className="px-5 py-8 text-center">
+                    <div className="w-6 h-6 border-2 border-gray-200 border-t-rm-green rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-xs text-gray-400">Carregando...</p>
+                  </div>
                 ) : unreadNotifications.length === 0 ? (
-                  <div className="px-4 py-6 text-sm text-gray-500">Nenhuma notificação no momento.</div>
+                  <div className="px-5 py-10 text-center">
+                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-2 text-gray-300">
+                      <Bell size={20} />
+                    </div>
+                    <p className="text-sm text-gray-400 font-medium">Nenhuma notificação</p>
+                    <p className="text-[10px] text-gray-300 mt-0.5">Você está em dia!</p>
+                  </div>
                 ) : (
-                  unreadNotifications.map(note => {
-                    const meta = getNotificationStyle(note.type);
-                    const Icon = meta.icon;
-                    return (
-                      <button
-                        key={note.id}
-                        onClick={() => markAsRead(note.id)}
-                        className="w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors flex gap-3"
-                      >
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${meta.color}`}>
-                          <Icon size={16} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-gray-800">{note.title}</p>
-                          <p className="text-xs text-gray-500 line-clamp-2">{note.body}</p>
-                          <p className="text-[10px] text-gray-400 mt-1">{formatRelativeTime(note.at)}</p>
-                        </div>
-                      </button>
-                    );
-                  })
+                  <div className="py-1">
+                    {unreadNotifications.map(note => {
+                      const meta = getNotificationStyle(note.type);
+                      const Icon = meta.icon;
+                      return (
+                        <button
+                          key={note.id}
+                          onClick={() => markAsRead(note.id)}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex gap-3 group"
+                        >
+                          <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${meta.color} ring-1 ${meta.ring} shrink-0 group-hover:scale-105 transition-transform`}>
+                            <Icon size={16} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-gray-800 truncate">{note.title}</p>
+                            <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{note.body}</p>
+                            <p className="text-[10px] text-gray-300 mt-1">{formatRelativeTime(note.at)}</p>
+                          </div>
+                          <div className="w-2 h-2 bg-rm-green rounded-full mt-2 shrink-0 opacity-60" />
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>
@@ -194,78 +214,83 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
         </div>
         
         {/* Divider */}
-        <div className="h-8 w-px bg-gray-200 mx-1 hidden md:block"></div>
+        <div className="h-7 w-px bg-gray-200 mx-0.5 hidden sm:block" />
         
-        {/* User Profile Dropdown Container */}
+        {/* Profile */}
         <div className="relative" ref={dropdownRef}>
           <button 
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className={`
-              flex items-center gap-3 pl-2 pr-2 py-1.5 rounded-full transition-all border
-              ${isProfileOpen ? 'bg-gray-50 border-gray-200 ring-2 ring-rm-gold/10' : 'border-transparent hover:bg-gray-50 hover:border-gray-100'}
+              flex items-center gap-2 sm:gap-2.5 p-1.5 sm:pl-3 sm:pr-2 rounded-xl transition-all border
+              ${isProfileOpen ? 'bg-gray-50 border-gray-200 shadow-sm' : 'border-transparent hover:bg-gray-50'}
             `}
           >
-            <div className="hidden md:flex flex-col items-end mr-1">
+            <div className="hidden sm:flex flex-col items-end">
               <span className="text-sm font-bold text-gray-700 leading-none">{user.name.split(' ')[0]}</span>
-              <span className="text-[10px] text-rm-gold font-bold uppercase tracking-wide mt-0.5">
+              <span className="text-[10px] text-rm-gold font-bold uppercase tracking-wide mt-0.5 flex items-center gap-0.5">
+                {user.role === UserRole.ADMIN && <Crown size={8} />}
                 {user.role === UserRole.ADMIN ? 'Produtor' : 'Afiliado'}
               </span>
             </div>
             
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-rm-green to-[#0f241e] p-0.5 shadow-md">
-               <div className="h-full w-full rounded-full bg-white flex items-center justify-center overflow-hidden">
-                 {user.avatarUrl ? (
-                   <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
-                 ) : (
-                   <span className="font-serif font-bold text-rm-green text-lg">{user.name.charAt(0)}</span>
-                 )}
-               </div>
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-rm-green to-[#0f241e] p-[2px] shadow-md">
+              <div className="h-full w-full rounded-[10px] bg-white flex items-center justify-center overflow-hidden">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="font-serif font-bold text-rm-green text-base">{user.name.charAt(0)}</span>
+                )}
+              </div>
             </div>
             
             <ChevronDown 
               size={14} 
-              className={`text-gray-400 hidden md:block transition-transform duration-200 ${isProfileOpen ? 'rotate-180 text-rm-green' : ''}`} 
+              className={`text-gray-400 hidden sm:block transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} 
             />
           </button>
           
-          {/* Dropdown Menu (Click based) */}
+          {/* Dropdown */}
           {isProfileOpen && (
-            <div className="absolute right-0 top-full mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 animate-fade-in origin-top-right z-50 ring-1 ring-black/5">
-               {/* Mobile Header in Dropdown */}
-               <div className="px-5 py-4 border-b border-gray-50 mb-2 bg-gray-50/50 md:hidden">
-                 <p className="text-sm font-bold text-gray-800">{user.name}</p>
-                 <p className="text-xs text-rm-gold font-bold">{user.email}</p>
-               </div>
-               
-               <div className="px-2 space-y-1">
-                 <button 
-                   onClick={() => handleNavClick('settings')}
-                   className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-3"
-                 >
-                   <UserIcon size={18} /> Meu Perfil
-                 </button>
-                 <button 
-                   onClick={() => handleNavClick('settings')}
-                   className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-3"
-                 >
-                   <Settings size={18} /> Configurações
-                 </button>
-                 <button 
-                   onClick={() => handleNavClick('settings')}
-                   className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-3"
-                 >
-                   <HelpCircle size={18} /> Ajuda & Suporte
-                 </button>
-               </div>
-               
-               <div className="border-t border-gray-100 my-2 mx-4"></div>
-               
-               <div className="px-2 pb-1">
-                 <button onClick={onLogout} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-3 transition-colors group">
-                   <LogOut size={18} className="group-hover:translate-x-1 transition-transform" /> 
-                   Sair do Sistema
-                 </button>
-               </div>
+            <div className="absolute right-0 top-full mt-2 w-60 bg-white rounded-2xl shadow-2xl border border-gray-100 animate-fade-in origin-top-right z-50 ring-1 ring-black/5 overflow-hidden">
+              
+              {/* User info - visible on mobile */}
+              <div className="px-4 py-3.5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 sm:hidden">
+                <p className="text-sm font-bold text-gray-800">{user.name}</p>
+                <p className="text-[10px] text-gray-400">{user.email}</p>
+              </div>
+              
+              <div className="p-1.5 space-y-0.5">
+                <button 
+                  onClick={() => handleNavClick('settings')}
+                  className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-2.5"
+                >
+                  <UserIcon size={16} /> Meu Perfil
+                </button>
+                <button 
+                  onClick={() => handleNavClick('settings')}
+                  className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-2.5"
+                >
+                  <Settings size={16} /> Configurações
+                </button>
+                <button 
+                  onClick={() => handleNavClick('settings')}
+                  className="w-full text-left px-3.5 py-2.5 text-sm font-medium text-gray-600 hover:bg-rm-green/5 hover:text-rm-green rounded-xl transition-colors flex items-center gap-2.5"
+                >
+                  <HelpCircle size={16} /> Ajuda & Suporte
+                </button>
+              </div>
+              
+              <div className="h-px bg-gray-100 mx-3" />
+              
+              <div className="p-1.5">
+                <button 
+                  onClick={onLogout} 
+                  className="w-full text-left px-3.5 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-2.5 transition-colors group"
+                >
+                  <LogOut size={16} className="group-hover:-translate-x-0.5 transition-transform" /> 
+                  Sair do Sistema
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -696,7 +696,7 @@ function App() {
       />
 
       {/* Main Content - Full Width */}
-      <main className="flex-1 transition-all duration-300 mt-16 w-full max-w-full">
+      <main className="flex-1 transition-all duration-300 mt-16 sm:mt-[68px] w-full max-w-full">
         <Routes>
           <Route path="/" element={<Navigate to="/painel" replace />} />
           <Route path="/login" element={<Navigate to="/painel" replace />} />

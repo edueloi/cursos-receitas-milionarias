@@ -183,7 +183,7 @@ export const api = {
             // Case where it's an existing file from edit mode (not fully implemented in this create flow)
             // Extract filename from URL if possible
             const parts = lesson.videoUrl.split('/');
-            videoData = { filename: parts[parts.length - 1] };
+            videoData = { filename: decodeURIComponent(parts[parts.length - 1]) };
         }
 
         // Handle Attachments

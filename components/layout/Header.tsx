@@ -161,7 +161,7 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
           </button>
 
           {isNotificationsOpen && (
-            <div className="absolute right-0 sm:right-0 top-full mt-2 w-[calc(100vw-24px)] sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 animate-fade-in origin-top-right z-50 ring-1 ring-black/5 max-h-[80vh] flex flex-col" style={{ right: 'max(-12px, calc(-50vw + 50%))' }}>
+            <div className="absolute -right-2 sm:right-0 top-full mt-2 w-[calc(100vw-32px)] sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 animate-fade-in origin-top-right z-50 ring-1 ring-black/5 max-h-[80vh] flex flex-col">
               {/* Notification Header */}
               <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between shrink-0">
                 <div>

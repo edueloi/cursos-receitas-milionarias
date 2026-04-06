@@ -123,9 +123,12 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
         <div className="flex items-center gap-2 select-none min-w-0 cursor-pointer group" onClick={() => handleNavClick('dashboard')}>
           <div className="relative w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 group-hover:scale-105 transition-transform shrink-0">
             <img 
-              src="https://receitasmilionarias.com.br/static/images/logo.png" 
+              src="https://receitasmilionarias.com.br/static/images/logo-academy.png" 
               alt="Logo" 
               className="h-5 w-5 sm:h-6 sm:w-6 object-contain relative z-10"
+              onError={(e) => {
+                (e.target as any).src = 'https://receitasmilionarias.com.br/static/images/logo.png';
+              }}
             />
           </div>
           <div className="flex flex-col min-w-0">

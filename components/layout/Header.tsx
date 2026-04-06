@@ -121,11 +121,11 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
         </button>
 
         <div className="flex items-center gap-2 select-none min-w-0 cursor-pointer group" onClick={() => handleNavClick('dashboard')}>
-          <div className="relative">
+          <div className="relative w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 group-hover:scale-105 transition-transform shrink-0">
             <img 
               src="https://receitasmilionarias.com.br/static/images/logo.png" 
               alt="Logo" 
-              className="h-8 w-8 sm:h-9 sm:w-9 object-contain shrink-0 group-hover:scale-105 transition-transform"
+              className="h-5 w-5 sm:h-6 sm:w-6 object-contain relative z-10"
             />
           </div>
           <div className="flex flex-col min-w-0">

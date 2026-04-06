@@ -137,12 +137,12 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeTab, onTabChange, isOpen,
             className="flex items-center gap-3 select-none cursor-pointer group"
             onClick={() => handleItemClick('dashboard')}
           >
-            <div className="relative">
-              <div className="absolute inset-0 bg-rm-gold/20 rounded-xl blur-md group-hover:bg-rm-gold/30 transition-all" />
+            <div className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform shrink-0">
+              <div className="absolute inset-0 bg-white/20 rounded-full blur-sm" />
               <img 
                 src="https://receitasmilionarias.com.br/static/images/logo.png" 
                 alt="Logo" 
-                className="h-10 w-10 object-contain drop-shadow-lg relative z-10 group-hover:scale-105 transition-transform"
+                className="h-7 w-7 object-contain relative z-10"
               />
             </div>
             <div className="flex flex-col">

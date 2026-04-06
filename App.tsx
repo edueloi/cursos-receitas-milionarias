@@ -130,6 +130,23 @@ function App() {
     help: '/ajuda'
   };
 
+  const tabFromPath = (pathname: string) => {
+    if (pathname.startsWith('/painel') || pathname === '/') return 'dashboard';
+    if (pathname.startsWith('/cursos')) return 'courses';
+    if (pathname.startsWith('/meus-cursos')) return 'my-courses';
+    if (pathname.startsWith('/certificados')) return 'certificates';
+    if (pathname.startsWith('/perfil')) return 'settings';
+    if (pathname.startsWith('/gerenciar-cursos')) return 'instructor-courses';
+    if (pathname.startsWith('/criar-curso')) return 'create-course';
+    if (pathname.startsWith('/produtor')) return 'instructor';
+    if (pathname.startsWith('/assinatura')) return 'signature';
+    if (pathname.startsWith('/ajuda')) return 'help';
+    return 'dashboard';
+  };
+
+  const activeTab = tabFromPath(location.pathname);
+  const isProducer = user?.role !== UserRole.AFFILIATE;
+
   const navigateTo = (tab: string) => {
     const path = pathFromTab[tab] || '/painel';
     navigate(path);
@@ -195,6 +212,68 @@ function App() {
     return { ...course, modules, progress: total > 0 ? Math.round((done / total) * 100) : 0 };
   });
 
+  const handleSaveCourse = (course: Course) => {
+    setEditingCourse(null);
+    refreshCourses();
+    navigate(user?.role === UserRole.ADMIN ? '/gerenciar-cursos' : '/cursos');
+  };
+
+  const handleCreateNew = () => {
+    setEditingCourse(null);
+    navigate('/criar-curso');
+  };
+
+  const handleEdit = (course: Course) => {
+    setEditingCourse(course);
+    navigate('/criar-curso');
+  };
+
+  const handleDeleteCourse = async (course: Course) => {
+    try {
+      await api.deleteCourse(course.id, user?.email || '');
+      refreshCourses();
+    } catch (error: any) {
+      addToast('error', 'Falha ao excluir', error.message || 'Erro ao excluir curso.');
+    }
+  };
+
+  const handleMarkLessonComplete = async (courseId: string, lessonId: string) => {
+    if (!user?.email) return;
+    try {
+      const progress = await api.updateProgress(user.email, courseId, lessonId, true);
+      setProgressMap(prev => ({ ...prev, [courseId]: progress[courseId] }));
+    } catch (error) {}
+  };
+
+  const handleAddToMyCourses = async (course: Course) => {
+    if (!user?.email) return;
+    try {
+      const updated = await api.updateMyCourses(user.email, course.id, 'add');
+      setMyCourseIds(updated);
+      addToast('success', 'Adicionado!', 'Curso adicionado aos seus cursos.');
+    } catch (error: any) {}
+  };
+
+  const handleToggleFavorite = async (course: Course) => {
+    if (!user?.email) return;
+    const isFav = favoriteIds.includes(course.id);
+    try {
+      const updated = await api.updateFavorites(user.email, course.id, isFav ? 'remove' : 'add');
+      setFavoriteIds(updated);
+    } catch (error: any) {}
+  };
+
+  const handleSelectCourse = (course: Course) => {
+    navigate(`/curso/${course.id}`);
+  };
+
+  const refreshCourses = async () => {
+    try {
+      const data = await api.getCourses();
+      setCourses(data);
+    } catch (error) {}
+  };
+
   const loginScreen = (
     <div className="min-h-screen w-full flex font-sans overflow-hidden bg-[#0A1A14] relative">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
@@ -202,9 +281,8 @@ function App() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#1C3B32]/80 to-[#0A1A14]/95 z-1"></div>
 
       <div className="relative z-10 w-full flex flex-col items-center justify-center p-6">
-        {/* Logo Container with Robust Fallback */}
         <div className="flex flex-col items-center mb-10 text-center animate-fade-in">
-           <div className="bg-white p-3 rounded-2xl shadow-2xl mb-5 w-24 h-24 flex items-center justify-center border-2 border-white/20 overflow-hidden">
+           <div className="bg-white p-3 rounded-2xl shadow-2xl mb-5 w-24 h-24 flex items-center justify-center border-2 border-white/20">
               <img 
                 src="https://receitasmilionarias.com.br/static/images/logo-academy.png" 
                 alt="Academy" 
@@ -219,7 +297,6 @@ function App() {
            <p className="text-rm-gold/80 text-xs font-bold uppercase tracking-[0.4em] mt-2">Academy</p>
         </div>
 
-        {/* Login Card - Clean and Aligned */}
         <div className="w-full max-w-[400px] bg-white rounded-[2.5rem] shadow-[0_30px_90px_rgba(0,0,0,0.5)] p-8 sm:p-10 animate-fade-in-up">
           <div className="text-center mb-8">
             <h3 className="text-2xl font-serif font-bold text-gray-900">Bem-vindo de volta!</h3>
@@ -254,7 +331,6 @@ function App() {
                </div>
              </div>
 
-             {/* FIXED SPACING AREA */}
              <div className="flex items-center justify-between w-full py-1">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" className="w-4 h-4 rounded text-rm-gold checked:bg-rm-gold border-gray-200" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
@@ -278,7 +354,7 @@ function App() {
              )}
           </div>
         </div>
-        <p className="mt-8 text-white/30 text-[10px] font-medium tracking-widest">&copy; 2025 RECEITAS MILIONÁRIAS ACADEMY</p>
+        <p className="mt-8 text-white/30 text-[10px] font-medium tracking-widest uppercase">&copy; 2025 Receitas Milionárias Academy</p>
       </div>
     </div>
   );

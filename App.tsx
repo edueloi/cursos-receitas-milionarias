@@ -53,7 +53,7 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
 
-  // --- Functions Defined EARLY to avoid reference errors ---
+  // --- Functions Defined EARLY ---
   const tabFromPath = (pathname: string) => {
     if (pathname.startsWith('/painel') || pathname === '/') return 'dashboard';
     if (pathname.startsWith('/cursos')) return 'courses';
@@ -84,13 +84,15 @@ function App() {
   const activeTab = tabFromPath(location.pathname);
   const isProducer = user?.role !== UserRole.AFFILIATE;
 
-  // --- PWA Initialization ---
+  // --- PWA Logic ---
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
     const handleBeforePrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      if (!isStandalone) setShowInstallBtn(true);
+      if (!isStandalone) {
+        setShowInstallBtn(true);
+      }
     };
     window.addEventListener('beforeinstallprompt', handleBeforePrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
@@ -106,7 +108,7 @@ function App() {
     }
   };
 
-  // --- State Management ---
+  // --- Auto Login ---
   useEffect(() => {
     const checkSession = async () => {
       const storedToken = localStorage.getItem('rm_token') || sessionStorage.getItem('rm_token');
@@ -158,7 +160,7 @@ function App() {
     }
   }, [user]);
 
-  // --- Navigation & Handlers ---
+  // --- Handlers ---
   const navigateTo = (tab: string) => {
     const path = pathFromTab[tab] || '/painel';
     navigate(path);
@@ -282,15 +284,15 @@ function App() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#1C3B32]/80 to-[#0A1A14]/95 z-1"></div>
 
       <div className="relative z-10 w-full flex flex-col items-center justify-center p-6">
-        <div className="flex flex-col items-center mb-10 text-center animate-fade-in">
+        <div className="flex flex-col items-center mb-10 text-center animate-fade-in w-full">
            <div className="bg-white p-3 rounded-2xl shadow-2xl mb-5 w-24 h-24 flex items-center justify-center border-2 border-white/20">
               <img 
-                src="https://receitasmilionarias.com.br/static/images/logo-academy.png" 
+                src="https://receitasmilionarias.com.br/static/images/logo.png" 
                 alt="Academy" 
                 className="w-full h-full object-contain"
                 onError={(e) => {
                    (e.target as any).onerror = null;
-                   (e.target as any).src = 'https://receitasmilionarias.com.br/static/images/logo.png';
+                   (e.target as any).src = 'https://receitasmilionarias.com.br/static/images/logo-academy.png';
                 }}
               />
            </div>
@@ -301,7 +303,7 @@ function App() {
         <div className="w-full max-w-[400px] bg-white rounded-[2.5rem] shadow-[0_30px_90px_rgba(0,0,0,0.5)] p-8 sm:p-10 animate-fade-in-up">
           <div className="text-center mb-8">
             <h3 className="text-2xl font-serif font-bold text-gray-900">Bem-vindo de volta!</h3>
-            <p className="text-gray-400 text-sm mt-1">Acesse sua conta para continuar</p>
+            <p className="text-gray-400 text-sm mt-1 font-medium">Acesse sua conta para continuar</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
@@ -334,8 +336,8 @@ function App() {
 
              <div className="flex items-center justify-between w-full py-1">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 rounded text-rm-gold checked:bg-rm-gold border-gray-200" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
-                  <span className="text-[12px] font-semibold text-gray-500">Manter logado</span>
+                  <input type="checkbox" className="w-4 h-4 rounded text-rm-gold bg-gray-50 checked:bg-rm-gold border-gray-200" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+                  <span className="text-[12px] font-bold text-gray-500">Manter logado</span>
                 </label>
                 <a href="#" className="text-[12px] font-bold text-rm-gold hover:underline">Esqueceu a senha?</a>
              </div>
@@ -355,12 +357,12 @@ function App() {
              )}
           </div>
         </div>
-        <p className="mt-8 text-white/30 text-[10px] font-medium tracking-widest uppercase tracking-[0.2em]">&copy; 2025 Receitas Milionárias Academy</p>
+        <p className="mt-8 text-white/30 text-[10px] font-medium tracking-widest uppercase">&copy; 2025 Receitas Milionárias Academy</p>
       </div>
     </div>
   );
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#1C3B32]"><div className="animate-spin rounded-full h-12 w-12 border-4 border-white/10 border-t-rm-gold"></div></div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#1C3B32] md:min-w-full"><div className="animate-spin rounded-full h-12 w-12 border-4 border-white/10 border-t-rm-gold"></div></div>;
   if (!user) return <Routes><Route path="/login" element={loginScreen} /><Route path="*" element={<Navigate to="/login" replace />} /></Routes>;
   
   if (location.pathname.startsWith('/curso/')) {

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { User, UserRole, Course } from './types';
 import Sidebar from './components/layout/Sidebar';
@@ -34,8 +34,8 @@ const YOUTUBE_VIDEO_URL = "https://www.youtube.com/embed/_tnDpt9jSWM";
 const INITIAL_COURSES: Course[] = [
   {
     id: '1',
-    title: 'Mestre das Vendas OrgÃ¢nicas',
-    description: 'Aprenda a vender receitas sem investir em anÃºncios. EstratÃ©gias de TikTok e Instagram.',
+    title: 'Mestre das Vendas Orgânicas',
+    description: 'Aprenda a vender receitas sem investir em anúncios. Estratégias de TikTok e Instagram.',
     thumbnailUrl: 'https://picsum.photos/id/42/800/600',
     totalDuration: '4h 30m',
     progress: 35,
@@ -44,7 +44,7 @@ const INITIAL_COURSES: Course[] = [
     modules: [
       {
         id: 'm1',
-        title: 'Fundamentos do TrÃ¡fego OrgÃ¢nico',
+        title: 'Fundamentos do Tráfego Orgânico',
         description: 'Conceitos base para iniciar.',
         lessons: [
           { 
@@ -57,7 +57,7 @@ const INITIAL_COURSES: Course[] = [
           },
           { 
             id: 'l2', 
-            title: 'Criando conteÃºdo viral', 
+            title: 'Criando conteúdo viral', 
             duration: '15:30', 
             completed: false,
             videoType: 'embed',
@@ -84,7 +84,7 @@ const INITIAL_COURSES: Course[] = [
   {
     id: '2',
     title: 'Confeitaria Lucrativa 2.0',
-    description: 'TÃ©cnicas avanÃ§adas de produÃ§Ã£o e precificaÃ§Ã£o para maximizar seus lucros.',
+    description: 'Técnicas avançadas de produção e precificação para maximizar seus lucros.',
     thumbnailUrl: 'https://picsum.photos/id/292/800/600',
     totalDuration: '8h 15m',
     progress: 100,
@@ -93,7 +93,7 @@ const INITIAL_COURSES: Course[] = [
     modules: [
       {
         id: 'm1',
-        title: 'PrecificaÃ§Ã£o Correta',
+        title: 'Precificação Correta',
         lessons: [
           { 
             id: 'l1', 
@@ -109,8 +109,8 @@ const INITIAL_COURSES: Course[] = [
   },
   {
     id: '3',
-    title: 'Mindset MilionÃ¡rio',
-    description: 'Desenvolva a mentalidade necessÃ¡ria para faturar alto no mercado digital.',
+    title: 'Mindset Milionário',
+    description: 'Desenvolva a mentalidade necessária para faturar alto no mercado digital.',
     thumbnailUrl: 'https://picsum.photos/id/106/800/600',
     totalDuration: '2h 00m',
     progress: 0,
@@ -145,6 +145,30 @@ function App() {
   // State for content management
   const [courses, setCourses] = useState<Course[]>([]);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null); // For editing
+
+  // PWA Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+
+  useEffect(() => {
+    const handleBeforePrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforePrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false);
+      setDeferredPrompt(null);
+    }
+  };
 
   // --- Auto Login Logic ---
   useEffect(() => {
@@ -303,7 +327,7 @@ function App() {
     setEditingCourse(null);
     setEmail('');
     setPassword('');
-    addToast('info', 'VocÃª saiu do sistema.', 'AtÃ© logo!');
+    addToast('info', 'Você saiu do sistema.', 'Até logo!');
     navigate('/login');
   };
 
@@ -324,7 +348,7 @@ function App() {
   const handleSaveCourse = (course: Course) => {
     if (editingCourse) {
       setEditingCourse(null);
-      addToast('success', 'Curso Atualizado!', 'As alteraÃ§Ãµes foram salvas com sucesso.');
+      addToast('success', 'Curso Atualizado!', 'As alterações foram salvas com sucesso.');
     } else {
       addToast('success', 'Curso Criado!', 'Seu novo curso foi salvo como rascunho.');
     }
@@ -506,22 +530,24 @@ function App() {
            {/* Content */}
            <div className="relative z-20">
              <div className="flex items-center gap-3 select-none mb-8">
-               {/* Logo removed as requested */}
+               <div className="bg-white p-2.5 rounded-xl shadow-lg flex items-center justify-center w-14 h-14">
+                  <img src="https://receitasmilionarias.com.br/static/images/logo-academy.png" alt="Logo" className="h-full w-full object-contain" />
+               </div>
                <div className="flex flex-col">
                  <span className="font-serif font-bold text-white text-3xl leading-none tracking-wide">Receitas</span>
-                 <span className="font-serif font-bold text-rm-gold text-3xl leading-none tracking-wide">MilionÃ¡rias</span>
+                 <span className="font-serif font-bold text-rm-gold text-3xl leading-none tracking-wide">Milionárias</span>
                </div>
              </div>
            </div>
 
            <div className="relative z-20 text-white max-w-lg space-y-6">
              <h2 className="text-5xl font-serif font-bold leading-tight drop-shadow-md">
-               Transforme suas <span className="text-rm-gold drop-shadow-md relative inline-block">Receitas</span> em um ImpÃ©rio.
+               Transforme suas <span className="text-rm-gold drop-shadow-md relative inline-block">Receitas</span> em um Império.
              </h2>
              <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="text-rm-gold mt-1" size={20} />
-                  <p className="text-lg opacity-90 font-light">Acesso exclusivo Ã  Academy para afiliados.</p>
+                  <p className="text-lg opacity-90 font-light">Acesso exclusivo à Academy para afiliados.</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle className="text-rm-gold mt-1" size={20} />
@@ -531,7 +557,7 @@ function App() {
            </div>
 
            <div className="relative z-20 text-xs text-white/50">
-             Â© 2025 Receitas MilionÃ¡rias Academy. Todos os direitos reservados.
+             © 2025 Receitas Milionárias Academy. Todos os direitos reservados.
            </div>
         </div>
 
@@ -545,8 +571,17 @@ function App() {
             
             {/* Logo centered above card on Mobile */}
             <div className="lg:hidden flex flex-col items-center mb-8 animate-fade-in">
-                 {/* Logo removed as requested */}
-                 <h1 className="font-serif font-bold text-3xl text-white tracking-wide">Receitas <span className="text-rm-gold">MilionÃ¡rias</span></h1>
+                 <div className="bg-white p-3.5 rounded-2xl shadow-xl mb-4 flex items-center justify-center w-24 h-24">
+                    <img 
+                      src="https://receitasmilionarias.com.br/static/images/logo-academy.png" 
+                      alt="Academy Logo" 
+                      className="h-full w-full object-contain"
+                      onError={(e) => {
+                        (e.target as any).src = 'https://receitasmilionarias.com.br/static/images/logo.png';
+                      }}
+                    />
+                 </div>
+                 <h1 className="font-serif font-bold text-3xl text-white tracking-wide">Receitas <span className="text-rm-gold">Milionárias</span></h1>
                  <p className="text-white/70 text-sm mt-1 uppercase tracking-widest font-medium">Academy</p>
             </div>
 
@@ -554,7 +589,7 @@ function App() {
             <div className="bg-white/95 lg:bg-white backdrop-blur-xl rounded-[2rem] shadow-2xl p-8 lg:p-12 w-full animate-fade-in-up border border-gray-100 lg:border-none relative z-10">
               
               <div className="text-center mb-8 hidden lg:block">
-                <h3 className="text-2xl font-serif font-bold text-rm-green">Receitas MilionÃ¡rias</h3>
+                <h3 className="text-2xl font-serif font-bold text-rm-green">Receitas Milionárias</h3>
                 <p className="text-gray-500 text-sm mt-2 font-medium tracking-wide">Academy</p>
               </div>
 
@@ -589,7 +624,7 @@ function App() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-rm-gold focus:ring-2 focus:ring-rm-gold/10 outline-none transition-all text-sm font-medium text-gray-800 placeholder-gray-400"
-                        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                        placeholder="••••••••"
                         required
                       />
                       <button 
@@ -631,23 +666,35 @@ function App() {
 
               <div className="mt-8 pt-6 border-t border-gray-100 text-center">
                  <p className="text-sm text-gray-500 mb-6">
-                   Ainda nÃ£o tem conta? <a href="https://receitasmilionarias.com.br/cadastro.html" target="_blank" className="text-rm-green font-bold hover:text-rm-gold transition-colors">Cadastre-se</a>
+                   Ainda não tem conta? <a href="https://receitasmilionarias.com.br/cadastro.html" target="_blank" className="text-rm-green font-bold hover:text-rm-gold transition-colors">Cadastre-se</a>
                  </p>
                  
-                 <a 
-                   href="https://dashboard.receitasmilionarias.com.br/" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-rm-green transition-colors text-xs font-medium border border-gray-200"
-                 >
-                   <ExternalLink size={14} /> Ir para Painel Afiliado
-                 </a>
+                 <div className="flex flex-col gap-3 items-center">
+                   <a 
+                     href="https://dashboard.receitasmilionarias.com.br/" 
+                     target="_blank" 
+                     rel="noopener noreferrer"
+                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-rm-green transition-colors text-xs font-medium border border-gray-200"
+                   >
+                     <ExternalLink size={14} /> Ir para Painel Afiliado
+                   </a>
+
+                   {/* Install Prompt Button */}
+                   {showInstallBtn && (
+                     <button 
+                       onClick={handleInstallApp}
+                       className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 transition-all text-xs font-bold border border-emerald-500/20 animate-fade-in"
+                     >
+                       <Zap size={14} className="animate-pulse" /> Instalar Aplicativo Academy
+                     </button>
+                   )}
+                 </div>
               </div>
             </div>
             
             {/* Mobile Footer */}
             <div className="lg:hidden mt-8 text-center text-white/40 text-[10px] font-medium">
-               &copy; 2025 Receitas MilionÃ¡rias Academy
+               &copy; 2025 Receitas Milionárias Academy
             </div>
 
           </div>
@@ -746,4 +793,3 @@ function App() {
 }
 
 export default App;
-

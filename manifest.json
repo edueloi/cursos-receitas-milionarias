@@ -8,13 +8,13 @@
   "theme_color": "#C9A635",
   "icons": [
     {
-      "src": "https://receitasmilionarias.com.br/static/images/logo.png",
+      "src": "https://receitasmilionarias.com.br/static/images/logo-academy.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://receitasmilionarias.com.br/static/images/logo.png",
+      "src": "https://receitasmilionarias.com.br/static/images/logo-academy.png",
       "sizes": "512x512",
       "type": "image/png"
     }

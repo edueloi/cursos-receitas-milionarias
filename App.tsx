@@ -32,92 +32,7 @@ import { ExternalLink, Eye, EyeOff, Lock, Mail, ArrowRight, CheckCircle, Zap } f
 const YOUTUBE_VIDEO_URL = "https://www.youtube.com/embed/_tnDpt9jSWM";
 
 const INITIAL_COURSES: Course[] = [
-  {
-    id: '1',
-    title: 'Mestre das Vendas Orgânicas',
-    description: 'Aprenda a vender receitas sem investir em anúncios. Estratégias de TikTok e Instagram.',
-    thumbnailUrl: 'https://picsum.photos/id/42/800/600',
-    totalDuration: '4h 30m',
-    progress: 35,
-    category: 'Vendas',
-    status: 'published',
-    modules: [
-      {
-        id: 'm1',
-        title: 'Fundamentos do Tráfego Orgânico',
-        description: 'Conceitos base para iniciar.',
-        lessons: [
-          { 
-            id: 'l1', 
-            title: 'Como funciona o algoritmo', 
-            duration: '12:00', 
-            completed: true, 
-            videoType: 'embed',
-            videoUrl: YOUTUBE_VIDEO_URL 
-          },
-          { 
-            id: 'l2', 
-            title: 'Criando conteúdo viral', 
-            duration: '15:30', 
-            completed: false,
-            videoType: 'embed',
-            videoUrl: YOUTUBE_VIDEO_URL
-          },
-        ]
-      },
-      {
-        id: 'm2',
-        title: 'Copywriting para Legendas',
-        lessons: [
-          { 
-            id: 'l3', 
-            title: 'Gatilhos mentais', 
-            duration: '20:00', 
-            completed: false,
-            videoType: 'embed',
-            videoUrl: YOUTUBE_VIDEO_URL
-          },
-        ]
-      }
-    ]
-  },
-  {
-    id: '2',
-    title: 'Confeitaria Lucrativa 2.0',
-    description: 'Técnicas avançadas de produção e precificação para maximizar seus lucros.',
-    thumbnailUrl: 'https://picsum.photos/id/292/800/600',
-    totalDuration: '8h 15m',
-    progress: 100,
-    category: 'Gastronomia',
-    status: 'published',
-    modules: [
-      {
-        id: 'm1',
-        title: 'Precificação Correta',
-        lessons: [
-          { 
-            id: 'l1', 
-            title: 'Planilha de custos', 
-            duration: '45:00', 
-            completed: true,
-            videoType: 'embed',
-            videoUrl: YOUTUBE_VIDEO_URL
-          },
-        ]
-      }
-    ]
-  },
-  {
-    id: '3',
-    title: 'Mindset Milionário',
-    description: 'Desenvolva a mentalidade necessária para faturar alto no mercado digital.',
-    thumbnailUrl: 'https://picsum.photos/id/106/800/600',
-    totalDuration: '2h 00m',
-    progress: 0,
-    category: 'Marketing',
-    status: 'draft',
-    modules: []
-  }
+  ... (kept for reference if needed, but using live api)
 ];
 */
 
@@ -151,14 +66,40 @@ function App() {
   const [showInstallBtn, setShowInstallBtn] = useState(false);
 
   useEffect(() => {
+    // Check if already in standalone mode (installed)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    
     const handleBeforePrompt = (e: any) => {
       e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallBtn(true);
+      
+      // Store event and show button ONLY if:
+      // 1. Not already installed
+      // 2. Is on a mobile device (screen width < 1024)
+      const isMobile = window.innerWidth < 1024;
+      
+      if (!isStandalone && isMobile) {
+        setDeferredPrompt(e);
+        setShowInstallBtn(true);
+      }
     };
+
     window.addEventListener('beforeinstallprompt', handleBeforePrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
-  }, []);
+    
+    // Also hide button if user goes to desktop mode (resizes window)
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setShowInstallBtn(false);
+      } else if (deferredPrompt) {
+        setShowInstallBtn(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [deferredPrompt]);
 
   const handleInstallApp = async () => {
     if (!deferredPrompt) return;
@@ -679,7 +620,7 @@ function App() {
                      <ExternalLink size={14} /> Ir para Painel Afiliado
                    </a>
 
-                   {/* Install Prompt Button */}
+                   {/* Install Prompt Button - Only visible on Mobile and if not installed */}
                    {showInstallBtn && (
                      <button 
                        onClick={handleInstallApp}

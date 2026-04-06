@@ -6,6 +6,18 @@ const COURSE_API_URL =
   import.meta.env.VITE_CURSOS_API ||
   'https://cursos-api.receitasmilionarias.com.br';
 
+// Helper to fully decode URI-encoded filenames (prevents %25 encoding accumulation)
+const fullyDecodeFilename = (fn: string): string => {
+  if (!fn) return fn;
+  let prev = '';
+  let current = fn;
+  while (current !== prev) {
+    prev = current;
+    try { current = decodeURIComponent(current); } catch(e) { break; }
+  }
+  return current;
+};
+
 // Helper to calculate duration from modules
 const calculateTotalDuration = (modules: any[]): string => {
   let totalSeconds = 0;
@@ -101,7 +113,7 @@ export const api = {
         id: String(c.id),
         title: c.titulo,
         description: c.descricao,
-        thumbnailUrl: c.imagemCapa ? `${COURSE_API_URL}/videos/${encodeURIComponent(c.imagemCapa)}` : '',
+        thumbnailUrl: c.imagemCapa ? `${COURSE_API_URL}/videos/${encodeURIComponent(fullyDecodeFilename(c.imagemCapa))}` : '',
         category: c.categoria,
         level: c.nivel,
         price: c.preco,
@@ -120,12 +132,12 @@ export const api = {
              description: l.descricaoAula || l.descricao || '',
              learningObjectives: Array.isArray(l.objetivos) ? l.objetivos : [],
              videoType: l.video?.filename ? 'upload' : 'embed',
-             videoUrl: l.video?.filename ? `${COURSE_API_URL}/videos/${encodeURIComponent(l.video.filename)}` : (l.video?.url || ''),
+             videoUrl: l.video?.filename ? `${COURSE_API_URL}/videos/${encodeURIComponent(fullyDecodeFilename(l.video.filename))}` : (l.video?.url || ''),
              isFreePreview: l.gratuita,
              attachments: (l.materiais || []).map((mat: any, matIdx: number) => ({
                 id: `att-${matIdx}`,
                 name: mat.originalname || mat.filename,
-                url: `${COURSE_API_URL}/materiais/${encodeURIComponent(mat.filename)}`,
+                url: `${COURSE_API_URL}/materiais/${encodeURIComponent(fullyDecodeFilename(mat.filename))}`,
                 type: 'pdf',
                 size: 'Unknown'
              }))
@@ -183,7 +195,7 @@ export const api = {
             // Case where it's an existing file from edit mode (not fully implemented in this create flow)
             // Extract filename from URL if possible
             const parts = lesson.videoUrl.split('/');
-            videoData = { filename: decodeURIComponent(parts[parts.length - 1]) };
+            videoData = { filename: fullyDecodeFilename(parts[parts.length - 1]) };
         }
 
         // Handle Attachments

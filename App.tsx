@@ -52,6 +52,8 @@ function App() {
 
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
+  const [showIOSSteps, setShowIOSSteps] = useState(false);
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !(window as any).MSStream;
 
   // --- Functions Defined EARLY ---
   const tabFromPath = (pathname: string) => {
@@ -87,15 +89,46 @@ function App() {
   // --- PWA Logic ---
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
-    const handleBeforePrompt = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      if (!isStandalone) {
+    if (isStandalone) return;
+
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (!isMobile) return;
+
+    // iOS: beforeinstallprompt não existe, mostra instrução manual
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !(window as any).MSStream;
+    if (isIOS) {
+      setShowInstallBtn(true);
+      return;
+    }
+
+    // Android: verifica se o evento já foi capturado antes do React montar
+    if ((window as any).__pwaInstallPrompt) {
+      setDeferredPrompt((window as any).__pwaInstallPrompt);
+      setShowInstallBtn(true);
+      return;
+    }
+
+    // Caso ainda não tenha chegado, escuta o evento customizado
+    const onReady = () => {
+      if ((window as any).__pwaInstallPrompt) {
+        setDeferredPrompt((window as any).__pwaInstallPrompt);
         setShowInstallBtn(true);
       }
     };
+    window.addEventListener('pwaready', onReady);
+
+    // Fallback: escuta beforeinstallprompt diretamente também
+    const handleBeforePrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
     window.addEventListener('beforeinstallprompt', handleBeforePrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
+      window.removeEventListener('pwaready', onReady);
+    };
   }, []);
 
   const handleInstallApp = async () => {
@@ -350,10 +383,31 @@ function App() {
           <div className="mt-8 pt-6 border-t border-gray-50 text-center">
              <p className="text-[13px] text-gray-400">Novo por aqui? <a href="https://receitasmilionarias.com.br/cadastro.html" target="_blank" className="text-rm-green font-bold">Crie sua conta</a></p>
              
-             {showInstallBtn && (
+             {showInstallBtn && !isIOS && (
                <button onClick={handleInstallApp} className="w-full mt-6 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 font-bold text-xs uppercase tracking-wider hover:bg-emerald-100 transition-all">
                  <Zap size={16} className="fill-emerald-500 animate-pulse" /> Instalar Aplicativo Academy
                </button>
+             )}
+             {showInstallBtn && isIOS && !showIOSSteps && (
+               <button onClick={() => setShowIOSSteps(true)} className="w-full mt-6 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 font-bold text-xs uppercase tracking-wider hover:bg-emerald-100 transition-all">
+                 <Zap size={16} className="fill-emerald-500 animate-pulse" /> Instalar no iPhone / iPad
+               </button>
+             )}
+             {showInstallBtn && isIOS && showIOSSteps && (
+               <div className="mt-6 text-left bg-emerald-50 border border-emerald-100 rounded-2xl p-4 space-y-3">
+                 <p className="text-[11px] font-black text-emerald-700 uppercase tracking-widest">Como instalar:</p>
+                 {[
+                   'Toque no ícone ⬆ (compartilhar) na barra do Safari',
+                   'Role e toque em "Adicionar à Tela de Início"',
+                   'Toque em "Adicionar" para confirmar',
+                 ].map((step, i) => (
+                   <div key={i} className="flex items-start gap-2">
+                     <span className="w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                     <p className="text-xs text-emerald-800 font-medium leading-relaxed">{step}</p>
+                   </div>
+                 ))}
+                 <button onClick={() => setShowIOSSteps(false)} className="text-[11px] text-emerald-500 font-bold w-full text-center pt-1 hover:text-emerald-700">Fechar</button>
+               </div>
              )}
           </div>
         </div>

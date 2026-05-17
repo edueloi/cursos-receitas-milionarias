@@ -1,20 +1,21 @@
 import React from 'react';
 import { User, UserRole } from '../../types';
-import { 
-  Home, 
-  BookOpen, 
-  Award, 
-  Settings, 
-  TrendingUp, 
-  List, 
-  PlusCircle, 
-  PenTool, 
-  HelpCircle, 
-  LogOut, 
+import {
+  Home,
+  BookOpen,
+  Award,
+  Settings,
+  TrendingUp,
+  List,
+  PlusCircle,
+  PenTool,
+  HelpCircle,
+  LogOut,
   X,
   ChevronRight,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  LayoutDashboard
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -224,7 +225,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, user, activeTab, onTabChange,
 
           {/* Footer Navigation */}
           <div className="pt-4 mt-auto border-t border-white/[0.05]">
-            <button 
+            <a
+              href="https://dashboard.receitasmilionarias.com.br/dashboard"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-rm-gold/70 hover:text-rm-gold hover:bg-rm-gold/10 transition-all group mb-1"
+            >
+              <div className="p-1.5 rounded-lg bg-rm-gold/10 group-hover:bg-rm-gold/20">
+                <LayoutDashboard size={14} />
+              </div>
+              <span className="text-xs font-semibold">Voltar ao Dashboard</span>
+            </a>
+            <button
               onClick={() => handleItemClick('help')}
               className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/40 hover:text-white/70 transition-colors group mb-1"
             >

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Course, Lesson, User } from '../types';
-import { ChevronLeft, Play, CheckCircle, ChevronDown, ChevronUp, Menu, X, FileText, MessageCircle, BookOpen, Clock, Download, Send, Edit3, Trash2, Award, Share2, ListVideo } from 'lucide-react';
+import { ChevronLeft, Play, CheckCircle, ChevronDown, ChevronUp, Menu, X, FileText, MessageCircle, BookOpen, Clock, Download, Send, Edit3, Trash2, Award, Share2, ListVideo, LayoutDashboard } from 'lucide-react';
 import { api } from '../services/api';
 
 interface PlayerPageProps {
@@ -130,12 +130,21 @@ const PlayerPage: React.FC<PlayerPageProps> = ({ course, onBack, user, onMarkLes
       {/* Premium Header */}
       <header className="h-14 sm:h-16 bg-[#0f0f18]/95 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-3 sm:px-5 z-50 flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-          <button 
-            onClick={onBack} 
+          <button
+            onClick={onBack}
             className="p-1.5 sm:p-2 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-colors shrink-0"
           >
             <ChevronLeft size={20} />
           </button>
+          <a
+            href="https://dashboard.receitasmilionarias.com.br/dashboard"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex items-center gap-1.5 p-1.5 sm:p-2 hover:bg-rm-gold/10 rounded-xl text-rm-gold/60 hover:text-rm-gold transition-colors shrink-0"
+            title="Voltar ao Dashboard"
+          >
+            <LayoutDashboard size={18} />
+          </a>
           <div className="min-w-0 flex-1">
             <h1 className="text-xs sm:text-sm font-bold truncate text-white/90">{course.title}</h1>
             <p className="text-[10px] text-white/40 truncate mt-0.5 sm:hidden">
